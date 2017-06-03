@@ -52,7 +52,7 @@ type Spin struct {
 	s *spin.Spinner
 }
 
-func NewSpin() *Spin {
+func newSpin() *Spin {
 	s := spin.New()
 	s.Set(spin.Spin1)
 	return &Spin{

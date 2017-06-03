@@ -85,7 +85,7 @@ func initListStarred(c *cli.Context) error {
 func runListStarred(c *cli.Context) error {
 	options := &github.ActivityListStarredOptions{Sort: "created"}
 	client := newClient()
-	spin := NewSpin()
+	spin := newSpin()
 
 	var results []listResult
 	for i := 0; ; i++ {
