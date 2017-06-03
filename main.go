@@ -14,7 +14,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Name = "ghctl"
-	app.Usage = "A CLI for GitHub repositories."
+	app.Usage = "A CLI tool for GitHub repositories."
 	app.Version = "0.0.1"
 	app.Authors = []cli.Author{
 		cli.Author{
