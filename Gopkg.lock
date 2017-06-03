@@ -1,0 +1,79 @@
+memo = "535f06167a400f0cb40d6e6c8bff43a0febae1919f51065abe05e390cbe2316e"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "62e9147c64a1ed519147b62a56a14e83e2be02c1"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/golang/protobuf"
+  packages = ["proto"]
+  revision = "6e4cc92cc905d5f4a73041c1b8228ea08f4c6147"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-github"
+  packages = ["github"]
+  revision = "1ae0b685ed0bc258d276c0bcd28fe2f0da494317"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/google/go-querystring"
+  packages = ["query"]
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "ded68f7a9561c023e790de24279db7ebf473ea80"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "c605e284fe17294bda444b34710735b29d1a9d90"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tj/go-spin"
+  packages = ["."]
+  revision = "866762925be273d8db6a8b816f359ca41d61bcdb"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/urfave/cli"
+  packages = ["."]
+  revision = "d70f47eeca3afd795160003bc6e28b001d60c67c"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = ["context"]
+  revision = "e4fa1c5465ad6111f206fc92186b8c83d64adbe1"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+  packages = [".","internal"]
+  revision = "f047394b6d14284165300fd82dad67edb3a4d7f6"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = ["unix"]
+  revision = "9ccfe848b9db8435a24c424abbc07a921adf1df5"
+
+[[projects]]
+  branch = "master"
+  name = "google.golang.org/appengine"
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","urlfetch"]
+  revision = "56d253d1dd14aa01937e12c73a0971bcfd797ff2"
