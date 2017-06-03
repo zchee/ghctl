@@ -126,12 +126,9 @@ func runListStarred(c *cli.Context) error {
 		fmt.Print(string(buf))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', tabwriter.AlignRight)
-		// var buf bytes.Buffer
 		for _, res := range results {
 			fmt.Fprintln(w, fmt.Sprintf("owner: %s\turl: %s", res.OwnerName, res.URL))
-			// buf.WriteString(fmt.Sprintf("owner: %s, url: %s\n", res.OwnerName, res.URL))
 		}
-		// fmt.Print(buf.String())
 		w.Flush()
 	}
 
