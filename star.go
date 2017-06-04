@@ -28,7 +28,7 @@ var starCmd = cli.Command{
 
 var starListCmd = cli.Command{
 	Name:      "list",
-	Usage:     "List the user starred repositories.",
+	Usage:     "List the [username] starred repositories. If [username] is empty, use authenticated user by default.",
 	ArgsUsage: "[username]",
 	Before:    initStarList,
 	Action:    runStarList,
