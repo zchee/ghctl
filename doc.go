@@ -2,5 +2,5 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Command ghctl is a CLI for GitHub repositories.
+// Command ghctl is a CLI tool for GitHub repositories.
 package main
