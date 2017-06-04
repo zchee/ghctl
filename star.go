@@ -63,7 +63,7 @@ var (
 	starVerbose bool
 )
 
-type repositoryListResult struct {
+type starListResult struct {
 	OwnerName string `json:"ownername"`
 	URL       string `json:"url"`
 }
