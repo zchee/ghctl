@@ -138,10 +138,10 @@ func runRepoList(c *cli.Context) error {
 		}(i)
 	}
 
-	// run goroutine for spinner and append repoURL results
 	var repoURLs []string
-	// Also add 1 to WaitGroup counter because repoURLs is data racy.
+	// add 1 to WaitGroup counter because repoURLs is data racy.
 	wg.Add(1)
+	// run goroutine for spinner and append repoURL results
 	go func() {
 		defer wg.Done()
 
