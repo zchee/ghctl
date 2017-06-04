@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/signal"
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
@@ -83,15 +84,35 @@ func initListStarred(c *cli.Context) error {
 }
 
 func runListStarred(c *cli.Context) error {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	defer func() {
+		signal.Stop(sig)
+		cancel()
+	}()
+	go func() {
+		select {
+		case <-sig:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	options := &github.ActivityListStarredOptions{Sort: "created"}
-	client := newClient()
+	client := newClient(ctx)
 	spin := newSpin()
 
 	var results []listResult
 	for i := 0; ; i++ {
 		options.Page = i
-		repos, res, err := client.Activity.ListStarred(context.Background(), listUsername, options)
+		repos, res, err := client.Activity.ListStarred(ctx, listUsername, options)
 		if err != nil {
+			spin.flush()
+			if ctx.Err() != nil {
+				return nil
+			}
 			return errors.Wrap(err, "could not get list starred")
 		}
 
