@@ -132,7 +132,7 @@ func runListStarred(c *cli.Context) error {
 			break
 		}
 
-		spin.Next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
+		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
 	}
 	spin.flush()
 

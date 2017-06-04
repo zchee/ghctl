@@ -47,6 +47,7 @@ func checkArgs(c *cli.Context, expected int, typ checkType, args ...string) erro
 	return nil
 }
 
+// Spin represents a loading spinner.
 type Spin struct {
 	s *spin.Spinner
 }
@@ -59,7 +60,7 @@ func newSpin() *Spin {
 	}
 }
 
-func (s *Spin) Next(desc ...string) {
+func (s *Spin) next(desc ...string) {
 	fmt.Fprintf(os.Stderr, "\r%s %s %s", color.BlueString(desc[0]), s.s.Next(), strings.Join(desc[1:], " "))
 }
 
