@@ -17,6 +17,28 @@ import (
 	"github.com/urfave/cli"
 )
 
+var starredListCmd = cli.Command{
+	Name:      "list",
+	Usage:     "List the user starred repositories.",
+	ArgsUsage: "[username]",
+	Before:    initStarList,
+	Action:    runStarList,
+	Flags: append(subFlagsList,
+		cli.BoolFlag{
+			Name:  "git, g",
+			Usage: "print git url instead of HTML url",
+		}),
+}
+
+var starCmd = cli.Command{
+	Name:  "star",
+	Usage: "manage the star.",
+	Subcommands: []cli.Command{
+		starredListCmd,
+	},
+	Flags: subFlagsList,
+}
+
 var subFlagsList = []cli.Flag{
 	cli.BoolFlag{
 		Name:  "json, j",
@@ -30,30 +52,6 @@ var subFlagsList = []cli.Flag{
 		Name:  "quiet, q",
 		Usage: "suppress some output",
 	},
-}
-
-var (
-	starredListCmd = cli.Command{
-		Name:      "list",
-		Usage:     "List the user starred repositories.",
-		ArgsUsage: "[username]",
-		Before:    initStarList,
-		Action:    runStarList,
-		Flags: append(subFlagsList,
-			cli.BoolFlag{
-				Name:  "git, g",
-				Usage: "print git url instead of HTML url",
-			}),
-	}
-)
-
-var starCmd = cli.Command{
-	Name:  "star",
-	Usage: "manage the star.",
-	Subcommands: []cli.Command{
-		starredListCmd,
-	},
-	Flags: subFlagsList,
 }
 
 var (
