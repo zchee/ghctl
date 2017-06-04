@@ -60,7 +60,7 @@ func newSpin() *Spin {
 }
 
 func (s *Spin) Next(desc ...string) {
-	fmt.Fprintf(os.Stderr, "\r%s %s %s", color.BlueString(desc[0]), s.s.Next(), strings.Join(desc[1:], ""))
+	fmt.Fprintf(os.Stderr, "\r%s %s %s", color.BlueString(desc[0]), s.s.Next(), strings.Join(desc[1:], " "))
 }
 
 func (s *Spin) flush() {
