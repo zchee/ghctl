@@ -112,7 +112,7 @@ func runListStarred(c *cli.Context) error {
 
 		spin.Next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
 	}
-	flush(os.Stderr)
+	spin.flush()
 
 	if len(results) == 0 {
 		return errors.Errorf("%s user have not starred repository\n", listUsername)
