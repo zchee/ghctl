@@ -33,12 +33,12 @@ var subFlagsList = []cli.Flag{
 }
 
 var (
-	listStarredCmd = cli.Command{
-		Name:      "star",
+	starredListCmd = cli.Command{
+		Name:      "list",
 		Usage:     "List the user starred repositories.",
 		ArgsUsage: "[username]",
-		Before:    initListStarred,
-		Action:    runListStarred,
+		Before:    initStarList,
+		Action:    runStarList,
 		Flags: append(subFlagsList,
 			cli.BoolFlag{
 				Name:  "git, g",
@@ -47,41 +47,41 @@ var (
 	}
 )
 
-var listCmd = cli.Command{
-	Name:  "list",
-	Usage: "List the repositories.",
+var starCmd = cli.Command{
+	Name:  "star",
+	Usage: "manage the star.",
 	Subcommands: []cli.Command{
-		listStarredCmd,
+		starredListCmd,
 	},
 	Flags: subFlagsList,
 }
 
 var (
-	listUsername string
+	starUsername string
 
-	listGitURL  bool
-	listJSON    bool
-	listQuiet   bool
-	listVerbose bool
+	starGitURL  bool
+	starJSON    bool
+	starQuiet   bool
+	starVerbose bool
 )
 
-type listResult struct {
+type starredListResult struct {
 	OwnerName string `json:"ownername"`
 	URL       string `json:"url"`
 }
 
-func initListStarred(c *cli.Context) error {
-	listUsername = c.Args().First()
+func initStarList(c *cli.Context) error {
+	starUsername = c.Args().First()
 
-	listGitURL = c.Bool("git")
-	listJSON = c.GlobalBool("json") || c.Bool("json")
-	listQuiet = c.GlobalBool("quiet") || c.Bool("quiet")
-	listVerbose = c.GlobalBool("verbose") || c.Bool("verbose")
+	starGitURL = c.Bool("git")
+	starJSON = c.GlobalBool("json") || c.Bool("json")
+	starQuiet = c.GlobalBool("quiet") || c.Bool("quiet")
+	starVerbose = c.GlobalBool("verbose") || c.Bool("verbose")
 
 	return nil
 }
 
-func runListStarred(c *cli.Context) error {
+func runStarList(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sig := make(chan os.Signal, 1)
@@ -102,10 +102,10 @@ func runListStarred(c *cli.Context) error {
 	options := &github.ActivityListStarredOptions{Sort: "created"}
 	spin := newSpin()
 
-	var results []listResult
+	var results []starredListResult
 	for i := 0; ; i++ {
 		options.Page = i
-		repos, res, err := client.Activity.ListStarred(ctx, listUsername, options)
+		repos, res, err := client.Activity.ListStarred(ctx, starUsername, options)
 		if err != nil {
 			spin.flush()
 			if _, ok := err.(*github.RateLimitError); ok {
@@ -120,10 +120,10 @@ func runListStarred(c *cli.Context) error {
 		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
 
 		for _, repo := range repos {
-			res := listResult{
+			res := starredListResult{
 				OwnerName: repo.Repository.GetFullName(),
 			}
-			if listGitURL {
+			if starGitURL {
 				res.URL = repo.Repository.GetGitURL()
 			} else {
 				res.URL = repo.Repository.GetHTMLURL()
@@ -137,10 +137,10 @@ func runListStarred(c *cli.Context) error {
 	spin.flush()
 
 	if len(results) == 0 {
-		return errors.Errorf("%s user have not starred repository\n", listUsername)
+		return errors.Errorf("%s user have not starred repository\n", starUsername)
 	}
 
-	if listJSON {
+	if starJSON {
 		buf, err := json.MarshalIndent(results, "", "\t")
 		if err != nil {
 			return errors.Wrap(err, "could not marshal to JSON")
