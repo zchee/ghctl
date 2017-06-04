@@ -117,6 +117,8 @@ func runListStarred(c *cli.Context) error {
 			return errors.Wrap(err, "could not get list starred")
 		}
 
+		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
+
 		for _, repo := range repos {
 			res := listResult{
 				OwnerName: repo.Repository.GetFullName(),
@@ -131,8 +133,6 @@ func runListStarred(c *cli.Context) error {
 		if i >= res.LastPage {
 			break
 		}
-
-		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
 	}
 	spin.flush()
 
