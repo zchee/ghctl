@@ -65,5 +65,5 @@ func (s *Spin) next(desc ...string) {
 }
 
 func (s *Spin) flush() {
-	fmt.Fprint(os.Stderr, "\r")
+	fmt.Fprint(os.Stderr, "\r\n")
 }
