@@ -21,12 +21,12 @@ var starCmd = cli.Command{
 	Name:  "star",
 	Usage: "manage the star.",
 	Subcommands: []cli.Command{
-		starredListCmd,
+		starListCmd,
 	},
 	Flags: subFlagsList,
 }
 
-var starredListCmd = cli.Command{
+var starListCmd = cli.Command{
 	Name:      "list",
 	Usage:     "List the user starred repositories.",
 	ArgsUsage: "[username]",
@@ -63,7 +63,7 @@ var (
 	starVerbose bool
 )
 
-type starredListResult struct {
+type starListResult struct {
 	OwnerName string `json:"ownername"`
 	URL       string `json:"url"`
 }
@@ -100,7 +100,7 @@ func runStarList(c *cli.Context) error {
 	options := &github.ActivityListStarredOptions{Sort: "created"}
 	spin := newSpin()
 
-	var results []starredListResult
+	var results []starListResult
 	for i := 0; ; i++ {
 		options.Page = i
 		repos, res, err := client.Activity.ListStarred(ctx, starUsername, options)
@@ -118,7 +118,7 @@ func runStarList(c *cli.Context) error {
 		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
 
 		for _, repo := range repos {
-			res := starredListResult{
+			res := starListResult{
 				OwnerName: repo.Repository.GetFullName(),
 			}
 			if starGitURL {
