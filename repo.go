@@ -115,7 +115,7 @@ func runRepoList(c *cli.Context) error {
 			defer wg.Done()
 
 			opts := *options // copy
-			opts.Page = i + 1
+			opts.Page = i
 
 			repos, _, err := client.Repositories.List(ctx, repoUsername, &opts)
 			if err != nil {
