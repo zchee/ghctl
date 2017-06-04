@@ -126,7 +126,7 @@ func runListStarred(c *cli.Context) error {
 			if listGitURL {
 				res.URL = repo.Repository.GetGitURL()
 			} else {
-				res.URL = repo.Repository.GetURL()
+				res.URL = repo.Repository.GetHTMLURL()
 			}
 			results = append(results, res)
 		}
