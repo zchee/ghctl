@@ -17,6 +17,15 @@ import (
 	"github.com/urfave/cli"
 )
 
+var starCmd = cli.Command{
+	Name:  "star",
+	Usage: "manage the star.",
+	Subcommands: []cli.Command{
+		starredListCmd,
+	},
+	Flags: subFlagsList,
+}
+
 var starredListCmd = cli.Command{
 	Name:      "list",
 	Usage:     "List the user starred repositories.",
@@ -28,15 +37,6 @@ var starredListCmd = cli.Command{
 			Name:  "git, g",
 			Usage: "print git url instead of HTML url",
 		}),
-}
-
-var starCmd = cli.Command{
-	Name:  "star",
-	Usage: "manage the star.",
-	Subcommands: []cli.Command{
-		starredListCmd,
-	},
-	Flags: subFlagsList,
 }
 
 var subFlagsList = []cli.Flag{
