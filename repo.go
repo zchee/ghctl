@@ -75,7 +75,7 @@ func runRepoList(c *cli.Context) error {
 	options := &github.RepositoryListOptions{
 		Type: repoListType,
 	}
-	options.Page = 0
+	options.Page = 1
 	spin := newSpin()
 
 	// pre-fetch page 1 for the get LastPage size
@@ -108,14 +108,14 @@ func runRepoList(c *cli.Context) error {
 
 	var wg sync.WaitGroup
 	errs := make(chan error)
-	// alloc i to 1 because already fetched page 1 (count 0)
+	// alloc i to 1 because already fetched page 1
 	for i := 1; i < lastPage; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 
-			opts := *options // copy
-			opts.Page = i
+			opts := *options  // copy
+			opts.Page = i + 1 // paging is based 1
 
 			repos, _, err := client.Repositories.List(ctx, repoUsername, &opts)
 			if err != nil {
@@ -145,7 +145,7 @@ func runRepoList(c *cli.Context) error {
 	go func() {
 		defer wg.Done()
 
-		j := 1
+		var j int
 		for {
 			select {
 			case urls := <-repoURLsCh:
