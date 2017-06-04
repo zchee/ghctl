@@ -36,7 +36,7 @@ var (
 	listStarredCmd = cli.Command{
 		Name:      "star",
 		Usage:     "List the user starred repositories.",
-		ArgsUsage: "<username>",
+		ArgsUsage: "[username]",
 		Before:    initListStarred,
 		Action:    runListStarred,
 		Flags: append(subFlagsList,
@@ -58,10 +58,11 @@ var listCmd = cli.Command{
 
 var (
 	listUsername string
-	listJSON     bool
-	listVerbose  bool
-	listQuiet    bool
-	listGitURL   bool
+
+	listGitURL  bool
+	listJSON    bool
+	listQuiet   bool
+	listVerbose bool
 )
 
 type listResult struct {
@@ -70,15 +71,12 @@ type listResult struct {
 }
 
 func initListStarred(c *cli.Context) error {
-	listJSON = c.GlobalBool("json") || c.Bool("json")
-	listVerbose = c.GlobalBool("verbose") || c.Bool("verbose")
-	listQuiet = c.GlobalBool("quiet") || c.Bool("quiet")
-	listGitURL = c.Bool("git")
-
-	if err := checkArgs(c, 1, exactArgs, "<username>"); err != nil {
-		return err
-	}
 	listUsername = c.Args().First()
+
+	listGitURL = c.Bool("git")
+	listJSON = c.GlobalBool("json") || c.Bool("json")
+	listQuiet = c.GlobalBool("quiet") || c.Bool("quiet")
+	listVerbose = c.GlobalBool("verbose") || c.Bool("verbose")
 
 	return nil
 }
