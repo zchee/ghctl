@@ -24,6 +24,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		starCmd,
+		repoCmd,
 	}
 
 	if err := app.Run(os.Args); err != nil {
