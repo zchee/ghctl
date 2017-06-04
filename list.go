@@ -100,8 +100,8 @@ func runListStarred(c *cli.Context) error {
 		}
 	}()
 
-	options := &github.ActivityListStarredOptions{Sort: "created"}
 	client := newClient(ctx)
+	options := &github.ActivityListStarredOptions{Sort: "created"}
 	spin := newSpin()
 
 	var results []listResult
