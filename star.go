@@ -23,7 +23,7 @@ var starCmd = cli.Command{
 	Subcommands: []cli.Command{
 		starListCmd,
 	},
-	Flags: subFlagsList,
+	Flags: starSubFlagsList,
 }
 
 var starListCmd = cli.Command{
@@ -32,14 +32,14 @@ var starListCmd = cli.Command{
 	ArgsUsage: "[username]",
 	Before:    initStarList,
 	Action:    runStarList,
-	Flags: append(subFlagsList,
+	Flags: append(starSubFlagsList,
 		cli.BoolFlag{
 			Name:  "git, g",
 			Usage: "print git url instead of HTML url",
 		}),
 }
 
-var subFlagsList = []cli.Flag{
+var starSubFlagsList = []cli.Flag{
 	cli.BoolFlag{
 		Name:  "json, j",
 		Usage: "prints in the JSON format instead of simple print.",
@@ -63,7 +63,7 @@ var (
 	starVerbose bool
 )
 
-type starListResult struct {
+type repositoryListResult struct {
 	OwnerName string `json:"ownername"`
 	URL       string `json:"url"`
 }
