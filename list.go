@@ -110,6 +110,9 @@ func runListStarred(c *cli.Context) error {
 		repos, res, err := client.Activity.ListStarred(ctx, listUsername, options)
 		if err != nil {
 			spin.flush()
+			if _, ok := err.(*github.RateLimitError); ok {
+				return errors.New("hit GitHub API rate limit")
+			}
 			if ctx.Err() != nil {
 				return nil
 			}
