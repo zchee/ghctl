@@ -131,8 +131,8 @@ func runRepoList(c *cli.Context) error {
 			}
 
 			urls := make([]string, len(repos))
-			for i, repo := range repos {
-				urls[i] = repo.GetHTMLURL()
+			for j, repo := range repos {
+				urls[j] = repo.GetHTMLURL()
 			}
 			repoURLsCh <- urls
 		}(i)
