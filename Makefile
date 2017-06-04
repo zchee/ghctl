@@ -1,2 +1,2 @@
 install:
-	go install -v -x .
+	go install -v -x -race .
