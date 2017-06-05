@@ -10,6 +10,10 @@ import (
 	"github.com/rhysd/locerr"
 )
 
+func init() {
+	locerr.SetColor(true)
+}
+
 func New(msg string) error {
 	return locerr.NewError(msg)
 }
