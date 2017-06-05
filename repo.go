@@ -55,7 +55,6 @@ func initRepoList(c *cli.Context) error {
 
 func runRepoList(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
