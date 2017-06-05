@@ -92,7 +92,6 @@ func runRepoList(c *cli.Context) error {
 	if lastPage == 0 {
 		return errors.Errorf("%s user have not %q repository", repoUsername, repoListType)
 	}
-	spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
 
 	// make lastPage size chan for parallel fetch
 	repoURLsCh := make(chan []string, lastPage)
@@ -103,6 +102,7 @@ func runRepoList(c *cli.Context) error {
 		firstUrls[i] = repo.GetHTMLURL()
 	}
 	repoURLsCh <- firstUrls
+	go spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
 
 	var wg sync.WaitGroup
 	wg.Add(lastPage - 1)
