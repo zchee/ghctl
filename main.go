@@ -5,8 +5,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
@@ -16,7 +18,27 @@ func init() {
 	locerr.SetColor(true)
 }
 
+var (
+	profileMode = flag.String("profile", "", "enable profiling mode, one of [cpu, mem, mutex, block, trace]")
+)
+
 func main() {
+	flag.Parse()
+	if *profileMode != "" {
+		f, err := os.Create(*profileMode + ".prof")
+		if err != nil {
+			fatal(err)
+		}
+		defer f.Close()
+		switch *profileMode {
+		case "cpu":
+			pprof.StartCPUProfile(f)
+			defer pprof.StopCPUProfile()
+		case "mem":
+			defer pprof.WriteHeapProfile(f)
+		}
+	}
+
 	app := cli.NewApp()
 	app.Name = "ghctl"
 	app.Usage = "A CLI tool for GitHub repositories."
@@ -31,9 +53,19 @@ func main() {
 		starCmd,
 		repoCmd,
 	}
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "profile",
+			Usage: "write CPU profile to file",
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
+		fatal(err)
 	}
+}
+
+func fatal(err error) {
+	fmt.Fprint(os.Stderr, err)
+	os.Exit(1)
 }
