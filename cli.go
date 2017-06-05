@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/pkg/errors"
+	"github.com/rhysd/locerr"
 	spin "github.com/tj/go-spin"
 	"github.com/urfave/cli"
 )
@@ -29,15 +29,15 @@ func checkArgs(c *cli.Context, expected int, typ checkType, args ...string) erro
 	switch typ {
 	case exactArgs:
 		if c.NArg() != expected {
-			err = errors.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+			err = locerr.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
 		}
 	case minArgs:
 		if c.NArg() < expected {
-			err = errors.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+			err = locerr.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
 		}
 	case maxArgs:
 		if c.NArg() > expected {
-			err = errors.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+			err = locerr.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
 		}
 	}
 

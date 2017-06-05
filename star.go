@@ -13,7 +13,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
-	"github.com/pkg/errors"
+	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
 )
 
@@ -107,12 +107,12 @@ func runStarList(c *cli.Context) error {
 		if err != nil {
 			spin.flush()
 			if _, ok := err.(*github.RateLimitError); ok {
-				return errors.New("hit GitHub API rate limit")
+				return locerr.NewError("hit GitHub API rate limit")
 			}
 			if ctx.Err() != nil {
 				return nil
 			}
-			return errors.Wrap(err, "could not get list starred")
+			return locerr.Note(err, "could not get list starred")
 		}
 
 		spin.next("fetching", fmt.Sprintf("page: %d/%d", i+1, res.LastPage))
@@ -135,13 +135,13 @@ func runStarList(c *cli.Context) error {
 	spin.flush()
 
 	if len(results) == 0 {
-		return errors.Errorf("%s user have not starred repository\n", starUsername)
+		return locerr.Errorf("%s user have not starred repository\n", starUsername)
 	}
 
 	if starJSON {
 		buf, err := json.MarshalIndent(results, "", "\t")
 		if err != nil {
-			return errors.Wrap(err, "could not marshal to JSON")
+			return locerr.Note(err, "could not marshal to JSON")
 		}
 		fmt.Print(string(buf))
 	} else {

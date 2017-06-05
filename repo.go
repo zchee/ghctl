@@ -15,7 +15,7 @@ import (
 	"sync"
 
 	"github.com/google/go-github/github"
-	"github.com/pkg/errors"
+	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
 )
 
@@ -82,17 +82,17 @@ func runRepoList(c *cli.Context) error {
 	firstRepos, firstRes, err := client.Repositories.List(ctx, repoUsername, options)
 	if err != nil {
 		if _, ok := err.(*github.RateLimitError); ok {
-			return errors.New("hit GitHub API rate limit")
+			return locerr.NewError("hit GitHub API rate limit")
 		}
 		if ctx.Err() != nil {
 			return nil
 		}
-		return errors.Wrap(err, "could not get list all repositories")
+		return locerr.Note(err, "could not get list all repositories")
 	}
 
 	lastPage := firstRes.LastPage
 	if lastPage == 0 {
-		return errors.Errorf("%s user have not %q repository", repoUsername, repoListType)
+		return locerr.Errorf("%s user have not %q repository", repoUsername, repoListType)
 	}
 	spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
 
@@ -120,13 +120,13 @@ func runRepoList(c *cli.Context) error {
 			repos, _, err := client.Repositories.List(ctx, repoUsername, &opts)
 			if err != nil {
 				if _, ok := err.(*github.RateLimitError); ok {
-					errs <- errors.New("hit GitHub API rate limit")
+					errs <- locerr.NewError("hit GitHub API rate limit")
 					return
 				}
 				if ctx.Err() != nil {
 					return
 				}
-				errs <- errors.Wrap(err, "could not get list all repositories")
+				errs <- locerr.Note(err, "could not get list all repositories")
 				return
 			}
 
