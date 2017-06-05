@@ -77,6 +77,7 @@ func runRepoList(c *cli.Context) error {
 		select {
 		case <-sig:
 			cancel()
+			signal.Stop(sig)
 			os.Exit(1)
 		case <-ctx.Done():
 		}
