@@ -1,0 +1,14 @@
+language: go
+go: 1.x
+os:
+  - linux
+  - osx
+
+before_install:
+  - go get -t -v ./...
+
+script:
+  - go test -coverprofile=coverage.txt -covermode=count ./...
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
