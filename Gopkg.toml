@@ -76,10 +76,6 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/pkg/errors"
-
-[[constraint]]
-  branch = "master"
   name = "github.com/rhysd/locerr"
 
 [[constraint]]

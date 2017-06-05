@@ -39,12 +39,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "c605e284fe17294bda444b34710735b29d1a9d90"
-
-[[projects]]
-  branch = "master"
   name = "github.com/rhysd/locerr"
   packages = ["."]
   revision = "d4382b0aed24a73e1f718c16f483c3bf2a5baf34"
@@ -88,6 +82,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f2ab35ffaee4d98d9b380373eb1782457b78f78075b10a8b373f3de565a1e0dd"
+  inputs-digest = "a2dc11f216cb8b818912ba875e8e5e8cdec13fa2225c33b2bd917c12e30d7a91"
   solver-name = "gps-cdcl"
   solver-version = 1
