@@ -97,7 +97,7 @@ func runRepoList(c *cli.Context) error {
 	// make lastPage size chan for parallel fetch
 	repoURLsCh := make(chan []string, lastPage)
 
-	// send first repositoriy urls to chan
+	// send first repository url to chan
 	firstUrls := make([]string, len(firstRepos))
 	for i, repo := range firstRepos {
 		firstUrls[i] = repo.GetHTMLURL()
@@ -141,7 +141,6 @@ func runRepoList(c *cli.Context) error {
 	close(repoURLsCh)
 
 	if len(errs) != 0 {
-		// return first error only
 		return <-errs
 	}
 
