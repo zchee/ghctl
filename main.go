@@ -8,8 +8,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
 )
+
+func init() {
+	locerr.SetColor(true)
+}
 
 func main() {
 	app := cli.NewApp()
