@@ -10,13 +10,8 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
 )
-
-func init() {
-	locerr.SetColor(true)
-}
 
 var (
 	profileMode = flag.String("profile", "", "enable profiling mode, one of [cpu, mem, mutex, block, trace]")
