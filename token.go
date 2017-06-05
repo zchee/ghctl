@@ -5,10 +5,10 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/google/go-github/github"
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 

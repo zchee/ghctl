@@ -70,8 +70,4 @@
 
 [[dependencies]]
   branch = "master"
-  name = "golang.org/x/net"
-
-[[dependencies]]
-  branch = "master"
   name = "golang.org/x/oauth2"
