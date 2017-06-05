@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/go-github/github"
 	"github.com/urfave/cli"
@@ -22,23 +24,33 @@ var repoCmd = cli.Command{
 	Name:  "repo",
 	Usage: "manage the repository.",
 	Subcommands: []cli.Command{
+		repoDeleteCmd,
 		repoListCmd,
 	},
 }
 
-var repoListCmd = cli.Command{
-	Name:      "list",
-	Usage:     "List the users repositories.",
-	ArgsUsage: "[username]",
-	Before:    initRepoList,
-	Action:    runRepoList,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:  "type",
-			Usage: "Type of repositories to list. Default: all [all, owner, public, private, member]",
+var (
+	repoListCmd = cli.Command{
+		Name:      "list",
+		Usage:     "List the users repositories.",
+		ArgsUsage: "[username]",
+		Before:    initRepoList,
+		Action:    runRepoList,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "type",
+				Usage: "Type of repositories to list. Default: all [all, owner, public, private, member]",
+			},
 		},
-	},
-}
+	}
+	repoDeleteCmd = cli.Command{
+		Name:      "delete",
+		Usage:     "Delete repository.",
+		ArgsUsage: "<repository name>",
+		Before:    initRepoDelete,
+		Action:    runRepoDelete,
+	}
+)
 
 var (
 	repoUsername string
@@ -151,6 +163,74 @@ func runRepoList(c *cli.Context) error {
 	sort.Strings(repoURLs)
 
 	fmt.Print(strings.Join(repoURLs, "\n"))
+
+	return nil
+}
+
+var (
+	repoDeleteName string
+)
+
+func initRepoDelete(c *cli.Context) error {
+	if err := checkArgs(c, 1, exactArgs, "<repository name>"); err != nil {
+		return err
+	}
+	repoDeleteName = c.Args().First()
+	return nil
+}
+
+func runRepoDelete(c *cli.Context) error {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt)
+	defer func() {
+		signal.Stop(sig)
+		cancel()
+	}()
+	go func() {
+		select {
+		case <-sig:
+			cancel()
+			os.Exit(1)
+		case <-ctx.Done():
+		}
+	}()
+
+	client := newClient(ctx)
+	spin := newSpin()
+	user, err := getUser(ctx, client)
+	if err != nil {
+		return errors.Wrap(err, "could not get user information")
+	}
+
+	fmt.Printf("remove repository %q? (y,n) ", repoDeleteName)
+	r := bufio.NewReader(os.Stdin)
+	ans, err := r.ReadString('\n')
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(ans) != "y" {
+		return errors.New("cancelled")
+	}
+	done := make(chan struct{}, 1)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				spin.next("deleting")
+				time.Sleep(time.Millisecond)
+			}
+		}
+	}()
+	_, err = client.Repositories.Delete(ctx, user.GetLogin(), repoDeleteName)
+	done <- struct{}{}
+	spin.flush()
+	if err != nil {
+		return errors.Wrapf(err, "could not delete %s repository", repoDeleteName)
+	}
 
 	return nil
 }
