@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/fatih/color"
 	"github.com/rhysd/locerr"
@@ -49,7 +50,8 @@ func checkArgs(c *cli.Context, expected int, typ checkType, args ...string) erro
 
 // Spin represents a loading spinner.
 type Spin struct {
-	s *spin.Spinner
+	s  *spin.Spinner
+	mu sync.Mutex
 }
 
 func newSpin() *Spin {
@@ -61,6 +63,8 @@ func newSpin() *Spin {
 }
 
 func (s *Spin) next(desc ...string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	fmt.Fprintf(os.Stderr, "\r%s %s %s", color.BlueString(desc[0]), s.s.Next(), strings.Join(desc[1:], " "))
 }
 
