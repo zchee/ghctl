@@ -5,7 +5,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -106,10 +105,10 @@ func runRepoList(c *cli.Context) error {
 	repoURLsCh <- firstUrls
 
 	var wg sync.WaitGroup
+	wg.Add(lastPage - 1)
 	errs := make(chan error)
 	// alloc i to 1 because already fetched page 1
 	for i := 1; i < lastPage; i++ {
-		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
 
@@ -134,46 +133,24 @@ func runRepoList(c *cli.Context) error {
 				urls[j] = repo.GetHTMLURL()
 			}
 			repoURLsCh <- urls
+			go spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
 		}(i)
 	}
-
-	var repoURLs []string
-	// add 1 to WaitGroup counter because repoURLs is data racy.
-	wg.Add(1)
-	// run goroutine for spinner and append repoURL results
-	go func() {
-		defer wg.Done()
-
-		var j int
-		for {
-			select {
-			case urls := <-repoURLsCh:
-				j++
-				repoURLs = append(repoURLs, strings.Join(urls, "\n"))
-				spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", j, lastPage))
-				if j == lastPage {
-					sort.Strings(repoURLs)
-					spin.flush()
-					return
-				}
-			}
-		}
-	}()
-	// wait for parallel fetching and gather repoURL results
 	wg.Wait()
+	close(repoURLsCh)
 
 	if len(errs) != 0 {
 		// return first error only
 		return <-errs
 	}
 
-	var out bytes.Buffer
-	for _, r := range repoURLs {
-		out.WriteString(r)
-		out.WriteByte('\n')
+	var repoURLs []string
+	for rp := range repoURLsCh {
+		repoURLs = append(repoURLs, rp...)
 	}
+	sort.Strings(repoURLs)
 
-	fmt.Print(out.String())
+	fmt.Print(strings.Join(repoURLs, "\n"))
 
 	return nil
 }
