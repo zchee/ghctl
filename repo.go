@@ -60,6 +60,9 @@ var (
 func initRepoList(c *cli.Context) error {
 	repoUsername = c.Args().First()
 	repoListType = c.String("type")
+	if repoListType == "" {
+		repoListType = "all"
+	}
 
 	return nil
 }
