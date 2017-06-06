@@ -28,7 +28,7 @@ Let's say to find an error at some range in the source.
     start := locerr.Pos{
     	Offset: 41,
     	Line:   6,
-    	Column: 1,
+    	Column: 2,
     	File:   src,
     }
     end := locerr.Pos{
@@ -85,6 +85,6 @@ And source code location information (file name, line and column) is added with 
 If the error has range information, the error shows code snippet which caused the error at the end
 of error message
 
-Colorized output can be seen at https://github.com/rhysd/ss/blob/master/loc/output.png?raw=true
+Colorized output can be seen at https://github.com/rhysd/ss/blob/master/locerr/output.png?raw=true
 */
 package locerr
