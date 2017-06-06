@@ -64,11 +64,12 @@ func caller() *locerr.Pos {
 	if !ok {
 		return nil
 	}
+	f, err := locerr.NewSourceFromFile(file)
+	if err != nil {
+		return nil
+	}
 	return &locerr.Pos{
-		File: &locerr.Source{
-			Path:   file,
-			Exists: true,
-		},
+		File: f,
 		Line: line,
 	}
 }
