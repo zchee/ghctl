@@ -14,8 +14,8 @@ import (
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
-	"github.com/rhysd/locerr"
 	"github.com/urfave/cli"
+	"github.com/zchee/ghctl/internal/errors"
 )
 
 var starCmd = cli.Command{
@@ -93,15 +93,15 @@ func runStarList(c *cli.Context) error {
 	if err != nil {
 		spin.flush()
 		if _, ok := err.(*github.RateLimitError); ok {
-			return locerr.NewError("hit GitHub API rate limit")
+			return errors.New("hit GitHub API rate limit")
 		}
 		if ctx.Err() != nil {
 			return nil
 		}
-		return locerr.Note(err, "could not get list starred")
+		return errors.Wrap(err, "could not get list starred")
 	}
 	if len(firstRepos) == 0 {
-		return locerr.Errorf("%s user have not starred repository\n", starUsername)
+		return errors.Errorf("%s user have not starred repository\n", starUsername)
 	}
 
 	lastPage := firstRes.LastPage
@@ -123,13 +123,13 @@ func runStarList(c *cli.Context) error {
 			if err != nil {
 				spin.flush()
 				if _, ok := err.(*github.RateLimitError); ok {
-					errs <- locerr.NewError("hit GitHub API rate limit")
+					errs <- errors.New("hit GitHub API rate limit")
 					return
 				}
 				if ctx.Err() != nil {
 					return
 				}
-				errs <- locerr.Note(err, "could not get list starred")
+				errs <- errors.Wrap(err, "could not get list starred")
 				return
 			}
 
@@ -154,7 +154,7 @@ func runStarList(c *cli.Context) error {
 	if starJSON {
 		buf, err := json.MarshalIndent(results, "", "\t")
 		if err != nil {
-			return locerr.Note(err, "could not marshal to JSON")
+			return errors.Wrap(err, "could not marshal to JSON")
 		}
 		fmt.Print(string(buf))
 	} else {
