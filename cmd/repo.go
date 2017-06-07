@@ -129,11 +129,12 @@ func runRepoList(cmd *cli.Command, args []string) error {
 				urls[j] = repo.GetHTMLURL()
 			}
 			repoURLsCh <- urls
-			go spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
+			spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
 		}(i)
 	}
 	wg.Wait()
 	close(repoURLsCh)
+	spin.flush()
 
 	if len(errs) != 0 {
 		return <-errs

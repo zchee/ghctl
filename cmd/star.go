@@ -114,11 +114,12 @@ func runStarList(cmd *cli.Command, args []string) error {
 			}
 
 			resultsCh <- appendStarResult(repos)
-			go spin.next("fetching", fmt.Sprintf("page: %d/%d", len(resultsCh), lastPage))
+			spin.next("fetching", fmt.Sprintf("page: %d/%d", len(resultsCh), lastPage))
 		}(i)
 	}
 	wg.Wait()
 	close(resultsCh)
+	spin.flush()
 
 	if len(errs) != 0 {
 		return <-errs
