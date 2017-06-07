@@ -20,7 +20,7 @@ import (
 
 var starCmd = cli.Command{
 	Name:  "star",
-	Usage: "manage the star.",
+	Usage: "manage the star",
 	Subcommands: []cli.Command{
 		starListCmd,
 	},
@@ -29,7 +29,7 @@ var starCmd = cli.Command{
 
 var starListCmd = cli.Command{
 	Name:      "list",
-	Usage:     "List the [username] starred repositories. If [username] is empty, use authenticated user by default.",
+	Usage:     "List the [username] starred repositories. If [username] is empty, use authenticated user by default",
 	ArgsUsage: "[username]",
 	Before:    initStarList,
 	Action:    runStarList,
@@ -43,7 +43,7 @@ var starListCmd = cli.Command{
 var starSubFlagsList = []cli.Flag{
 	cli.BoolFlag{
 		Name:  "json, j",
-		Usage: "prints in the JSON format instead of simple print.",
+		Usage: "prints in JSON format instead of raw print",
 	},
 	cli.BoolFlag{
 		Name:  "verbose, v",

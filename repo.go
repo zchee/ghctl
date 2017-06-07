@@ -21,7 +21,7 @@ import (
 
 var repoCmd = cli.Command{
 	Name:  "repo",
-	Usage: "manage the repository.",
+	Usage: "manage the repository",
 	Subcommands: []cli.Command{
 		repoDeleteCmd,
 		repoListCmd,
@@ -31,7 +31,7 @@ var repoCmd = cli.Command{
 var (
 	repoListCmd = cli.Command{
 		Name:      "list",
-		Usage:     "List the users repositories.",
+		Usage:     "List the users repositories",
 		ArgsUsage: "[username]",
 		Before:    initRepoList,
 		Action:    runRepoList,
@@ -44,7 +44,7 @@ var (
 	}
 	repoDeleteCmd = cli.Command{
 		Name:      "delete",
-		Usage:     "Delete repository.",
+		Usage:     "Delete repository",
 		ArgsUsage: "<repository name>",
 		Before:    initRepoDelete,
 		Action:    runRepoDelete,
