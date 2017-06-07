@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/rhysd/locerr"
   packages = ["."]
-  revision = "6229fc9b1cc8fd9b9c197e28e2698675759cd137"
+  revision = "fb50ff2776896b096584a74f33fad9ca0f2f9d6a"
 
 [[projects]]
   branch = "master"
