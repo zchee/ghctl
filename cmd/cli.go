@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package cmd
 
 import (
 	"fmt"
@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/fatih/color"
-	"github.com/rhysd/locerr"
+	cli "github.com/spf13/cobra"
 	spin "github.com/tj/go-spin"
-	"github.com/urfave/cli"
+	"github.com/zchee/ghctl/internal/errors"
 )
 
 type checkType int
@@ -24,21 +24,21 @@ const (
 	maxArgs
 )
 
-func checkArgs(c *cli.Context, expected int, typ checkType, args ...string) error {
-	cmdName := c.Command.FullName()
+func checkArgs(cmd *cli.Command, args []string, expected int, typ checkType, value ...string) error {
+	cmdName := cmd.Name()
 	var err error
 	switch typ {
 	case exactArgs:
-		if c.NArg() != expected {
-			err = locerr.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+		if len(args) != expected {
+			err = errors.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	case minArgs:
-		if c.NArg() < expected {
-			err = locerr.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+		if len(args) < expected {
+			err = errors.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	case maxArgs:
-		if c.NArg() > expected {
-			err = locerr.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(args, " "), expected)
+		if len(args) > expected {
+			err = errors.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	}
 

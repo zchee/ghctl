@@ -2,5 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Command ghctl is a CLI tool for GitHub repositories.
-package main
+package cmd
+
+import (
+	"github.com/zchee/ghctl/internal/errors"
+)
+
+var (
+	ErrRateLimit = errors.New("hit GitHub API rate limit")
+)

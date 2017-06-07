@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package cmd
 
 import (
 	"bufio"
@@ -15,64 +15,59 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
-	"github.com/urfave/cli"
+	cli "github.com/spf13/cobra"
 	"github.com/zchee/ghctl/internal/errors"
 )
 
-var repoCmd = cli.Command{
-	Name:  "repo",
-	Usage: "manage the repository",
-	Subcommands: []cli.Command{
-		repoDeleteCmd,
-		repoListCmd,
-	},
+// repoCmd represents the repo command
+var repoCmd = &cli.Command{
+	Use:   "repo",
+	Short: "manage the repository",
 }
 
 var (
-	repoListCmd = cli.Command{
-		Name:      "list",
-		Usage:     "List the users repositories",
-		ArgsUsage: "[username]",
-		Before:    initRepoList,
-		Action:    runRepoList,
-		Flags: []cli.Flag{
-			cli.StringFlag{
-				Name:  "type",
-				Usage: "Type of repositories to list. Default: all [all, owner, public, private, member]",
-			},
+	repoListCmd = &cli.Command{
+		Use:   "list",
+		Short: "List the users repositories",
+		Run: func(cmd *cli.Command, args []string) {
+			if err := runRepoList(cmd, args); err != nil {
+				cmd.Println(err)
+			}
 		},
 	}
-	repoDeleteCmd = cli.Command{
-		Name:      "delete",
-		Usage:     "Delete repository",
-		ArgsUsage: "<repository name>",
-		Before:    initRepoDelete,
-		Action:    runRepoDelete,
+	repoDeleteCmd = &cli.Command{
+		Use:   "delete",
+		Short: "Delete repository",
+		Run: func(cmd *cli.Command, args []string) {
+			if err := runRepoDelete(cmd, args); err != nil {
+				cmd.Println(err)
+			}
+		},
 	}
 )
 
-var (
-	repoUsername string
-	repoListType string
-)
+func init() {
+	RootCmd.AddCommand(repoCmd)
 
-func initRepoList(c *cli.Context) error {
-	repoUsername = c.Args().First()
-	repoListType = c.String("type")
-	if repoListType == "" {
-		repoListType = "all"
-	}
+	repoCmd.AddCommand(repoListCmd)
+	repoCmd.AddCommand(repoDeleteCmd)
 
-	return nil
+	repoListCmd.Flags().String("type", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
 }
 
-func runRepoList(c *cli.Context) error {
+func runRepoList(cmd *cli.Command, args []string) error {
+	repoListType := cmd.Flag("type")
+	var repoUsername string
+	if len(args) > 0 {
+		repoUsername = args[0]
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	client := newClient(ctx)
 	options := &github.RepositoryListOptions{
-		Type: repoListType,
+		Type: repoListType.Value.String(),
 	}
 	options.Page = 1
 	spin := newSpin()
@@ -91,7 +86,7 @@ func runRepoList(c *cli.Context) error {
 
 	lastPage := firstRes.LastPage
 	if lastPage == 0 {
-		return errors.Errorf("%s user have not %q repository", repoUsername, repoListType)
+		return errors.Errorf("%s user have not %q repository", repoUsername, repoListType.Value.String())
 	}
 
 	// make lastPage size chan for parallel fetch
@@ -155,19 +150,12 @@ func runRepoList(c *cli.Context) error {
 	return nil
 }
 
-var (
-	repoDeleteName string
-)
-
-func initRepoDelete(c *cli.Context) error {
-	if err := checkArgs(c, 1, exactArgs, "<repository name>"); err != nil {
+func runRepoDelete(cmd *cli.Command, args []string) error {
+	if err := checkArgs(cmd, args, 1, exactArgs, "<repository>"); err != nil {
 		return err
 	}
-	repoDeleteName = c.Args().First()
-	return nil
-}
+	repoDeleteName := args[0]
 
-func runRepoDelete(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -208,3 +196,11 @@ func runRepoDelete(c *cli.Context) error {
 
 	return nil
 }
+
+// func runRepoOpen(cmd *cli.Command, args []string) error {
+// 	if err := checkArgs(cmd, args, 1, exactArgs, "<username/repository>"); err != nil {
+// 		return err
+// 	}
+// 	repoOpenName := args[0]
+// 	return nil
+// }

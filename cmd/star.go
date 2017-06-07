@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package cmd
 
 import (
 	"context"
@@ -14,73 +14,53 @@ import (
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
-	"github.com/urfave/cli"
+	cli "github.com/spf13/cobra"
 	"github.com/zchee/ghctl/internal/errors"
 )
 
-var starCmd = cli.Command{
-	Name:  "star",
-	Usage: "manage the star",
-	Subcommands: []cli.Command{
-		starListCmd,
-	},
-	Flags: starSubFlagsList,
-}
-
-var starListCmd = cli.Command{
-	Name:      "list",
-	Usage:     "List the [username] starred repositories. If [username] is empty, use authenticated user by default",
-	ArgsUsage: "[username]",
-	Before:    initStarList,
-	Action:    runStarList,
-	Flags: append(starSubFlagsList,
-		cli.BoolFlag{
-			Name:  "git, g",
-			Usage: "print git url instead of HTML url",
-		}),
-}
-
-var starSubFlagsList = []cli.Flag{
-	cli.BoolFlag{
-		Name:  "json, j",
-		Usage: "prints in JSON format instead of raw print",
-	},
-	cli.BoolFlag{
-		Name:  "verbose, v",
-		Usage: "be verbose",
-	},
-	cli.BoolFlag{
-		Name:  "quiet, q",
-		Usage: "suppress some output",
-	},
+// starCmd represents the star command
+var starCmd = &cli.Command{
+	Use:   "star",
+	Short: "manage the star",
 }
 
 var (
-	starUsername string
-
-	starGitURL  bool
-	starJSON    bool
-	starQuiet   bool
-	starVerbose bool
+	starListCmd = &cli.Command{
+		Use:   "list",
+		Short: "List the [username] starred repositories. If [username] is empty, use authenticated user by default",
+		Run: func(cmd *cli.Command, args []string) {
+			if err := runStarList(cmd, args); err != nil {
+				cmd.Println(err)
+			}
+		},
+	}
 )
+
+var (
+	starGitURL bool
+	starJSON   bool
+)
+
+func init() {
+	RootCmd.AddCommand(starCmd)
+
+	starCmd.AddCommand(starListCmd)
+	starCmd.Flags().BoolVar(&starJSON, "json", false, "prints in JSON format instead of raw print")
+
+	starListCmd.Flags().BoolVar(&starGitURL, "git", false, "print git url instead of HTML url")
+}
 
 type starListResult struct {
 	OwnerName string `json:"ownername"`
 	URL       string `json:"url"`
 }
 
-func initStarList(c *cli.Context) error {
-	starUsername = c.Args().First()
+func runStarList(cmd *cli.Command, args []string) error {
+	var starUsername string
+	if len(args) > 0 {
+		starUsername = args[0]
+	}
 
-	starGitURL = c.Bool("git")
-	starJSON = c.GlobalBool("json") || c.Bool("json")
-	starQuiet = c.GlobalBool("quiet") || c.Bool("quiet")
-	starVerbose = c.GlobalBool("verbose") || c.Bool("verbose")
-
-	return nil
-}
-
-func runStarList(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
