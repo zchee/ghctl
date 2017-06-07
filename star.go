@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/signal"
 	"sort"
 	"sync"
 	"text/tabwriter"
@@ -83,21 +82,7 @@ func initStarList(c *cli.Context) error {
 
 func runStarList(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	defer func() {
-		signal.Stop(sig)
-		cancel()
-	}()
-	go func() {
-		select {
-		case <-sig:
-			cancel()
-			os.Exit(1)
-		case <-ctx.Done():
-		}
-	}()
+	defer cancel()
 
 	client := newClient(ctx)
 	options := &github.ActivityListStarredOptions{Sort: "created"}

@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
 	"sort"
 	"strings"
 	"sync"
@@ -69,22 +68,7 @@ func initRepoList(c *cli.Context) error {
 
 func runRepoList(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	defer func() {
-		signal.Stop(sig)
-		cancel()
-	}()
-	go func() {
-		select {
-		case <-sig:
-			cancel()
-			signal.Stop(sig)
-			os.Exit(1)
-		case <-ctx.Done():
-		}
-	}()
+	defer cancel()
 
 	client := newClient(ctx)
 	options := &github.RepositoryListOptions{
@@ -185,21 +169,7 @@ func initRepoDelete(c *cli.Context) error {
 
 func runRepoDelete(c *cli.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
-
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, os.Interrupt)
-	defer func() {
-		signal.Stop(sig)
-		cancel()
-	}()
-	go func() {
-		select {
-		case <-sig:
-			cancel()
-			os.Exit(1)
-		case <-ctx.Done():
-		}
-	}()
+	defer cancel()
 
 	client := newClient(ctx)
 	spin := newSpin()
