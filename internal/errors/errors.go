@@ -48,17 +48,6 @@ func Wrapf(err error, format string, a ...interface{}) error {
 	return locerr.NotefAt(*pos, err, format, a...)
 }
 
-func WithStack(err error) error {
-	if err == nil {
-		return nil
-	}
-	pos := caller()
-	if pos == nil {
-		return locerr.NewError(err.Error())
-	}
-	return locerr.WithPos(*pos, err)
-}
-
 func caller() *locerr.Pos {
 	_, file, line, ok := runtime.Caller(2)
 	if !ok {
