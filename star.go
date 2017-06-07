@@ -162,7 +162,9 @@ func runStarList(c *cli.Context) error {
 		for _, res := range results {
 			fmt.Fprintln(w, fmt.Sprintf("owner: %s\turl: %s", res.OwnerName, res.URL))
 		}
-		w.Flush()
+		if err := w.Flush(); err != nil {
+			return errors.Wrap(err, "could not flush tabwriter")
+		}
 	}
 
 	return nil
