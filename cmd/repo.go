@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
+	"github.com/skratchdot/open-golang/open"
 	cli "github.com/spf13/cobra"
 	"github.com/zchee/ghctl/internal/errors"
 )
@@ -44,6 +46,15 @@ var (
 			}
 		},
 	}
+	repoOpenCmd = &cli.Command{
+		Use:   "open",
+		Short: "Open repository",
+		Run: func(cmd *cli.Command, args []string) {
+			if err := runRepoOpen(cmd, args); err != nil {
+				cmd.Println(err)
+			}
+		},
+	}
 )
 
 func init() {
@@ -51,6 +62,7 @@ func init() {
 
 	repoCmd.AddCommand(repoListCmd)
 	repoCmd.AddCommand(repoDeleteCmd)
+	repoCmd.AddCommand(repoOpenCmd)
 
 	repoListCmd.Flags().String("type", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
 }
@@ -198,10 +210,34 @@ func runRepoDelete(cmd *cli.Command, args []string) error {
 	return nil
 }
 
-// func runRepoOpen(cmd *cli.Command, args []string) error {
-// 	if err := checkArgs(cmd, args, 1, exactArgs, "<username/repository>"); err != nil {
-// 		return err
-// 	}
-// 	repoOpenName := args[0]
-// 	return nil
-// }
+func runRepoOpen(cmd *cli.Command, args []string) error {
+	if err := checkArgs(cmd, args, 1, exactArgs, "<username/repository>"); err != nil {
+		return err
+	}
+	repoOpenName := args[0]
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	client := newClient(ctx)
+
+	if !strings.Contains(repoOpenName, "/") {
+		user, err := getUser(ctx, client)
+		if err != nil {
+			return errors.Wrap(err, "could not get user information")
+		}
+		repoOpenName = fmt.Sprintf("%s/%s", user.GetLogin(), repoOpenName)
+	}
+
+	u := fmt.Sprintf("https://github.com/%s", repoOpenName)
+	resp, err := http.Get(u)
+	if err != nil || resp.StatusCode == http.StatusNotFound {
+		return errors.Errorf("failed http request: %s", u)
+	}
+
+	if err := open.Run(u); err != nil {
+		return errors.Wrap(err, "could not open")
+	}
+
+	return nil
+}
