@@ -116,11 +116,11 @@ func starList(ctx context.Context, username string) ([]starListResult, error) {
 	wg.Add(lastPage - 1)
 	errs := make(chan error)
 	for i := 1; i < lastPage; i++ {
-		opts := *options // copy
-		opts.Page = i + 1
-		go func(opts github.ActivityListStarredOptions) {
+		go func(i int) {
 			defer wg.Done()
 
+			opts := *options // copy
+			opts.Page = i + 1
 			repos, _, err := client.Activity.ListStarred(ctx, username, &opts)
 			if err != nil {
 				if _, ok := err.(*github.RateLimitError); ok {
@@ -133,7 +133,7 @@ func starList(ctx context.Context, username string) ([]starListResult, error) {
 
 			resultsCh <- appendStarResult(repos)
 			spin.next("fetching", fmt.Sprintf("page: %d/%d", len(resultsCh), lastPage))
-		}(opts)
+		}(i)
 	}
 	wg.Wait()
 	close(resultsCh)
