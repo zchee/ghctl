@@ -78,14 +78,14 @@ func runRepoList(cmd *cli.Command, args []string) error {
 	defer cancel()
 
 	client := newClient(ctx)
-	options := &github.RepositoryListOptions{
+	options := github.RepositoryListOptions{
 		Type: repoListType.Value.String(),
 	}
 	options.Page = 1
 	spin := newSpin()
 
 	// pre-fetch page 1 for the get LastPage size
-	firstRepos, firstRes, err := client.Repositories.List(ctx, repoUsername, options)
+	firstRepos, firstRes, err := client.Repositories.List(ctx, repoUsername, &options)
 	if err != nil {
 		if _, ok := err.(*github.RateLimitError); ok {
 			return errors.New("hit GitHub API rate limit")
@@ -115,21 +115,22 @@ func runRepoList(cmd *cli.Command, args []string) error {
 	var wg sync.WaitGroup
 	wg.Add(lastPage - 1)
 	errs := make(chan error)
+	sem := make(chan struct{}, 20)
+
 	// alloc i to 1 because already fetched page 1
 	for i := 1; i < lastPage; i++ {
-		go func(i int) {
-			defer wg.Done()
+		sem <- struct{}{}
+		go func(opts github.RepositoryListOptions, i int) {
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
 
-			opts := *options  // copy
 			opts.Page = i + 1 // paging is based 1
-
 			repos, _, err := client.Repositories.List(ctx, repoUsername, &opts)
 			if err != nil {
 				if _, ok := err.(*github.RateLimitError); ok {
 					errs <- errors.New("hit GitHub API rate limit")
-					return
-				}
-				if ctx.Err() != nil {
 					return
 				}
 				errs <- errors.Wrap(err, "could not get list all repositories")
@@ -142,7 +143,7 @@ func runRepoList(cmd *cli.Command, args []string) error {
 			}
 			repoURLsCh <- urls
 			spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
-		}(i)
+		}(options, i)
 	}
 	wg.Wait()
 	close(repoURLsCh)
