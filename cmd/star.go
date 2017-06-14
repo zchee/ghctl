@@ -115,9 +115,15 @@ func starList(ctx context.Context, username string) ([]starListResult, error) {
 	var wg sync.WaitGroup
 	wg.Add(lastPage - 1)
 	errs := make(chan error)
+	sem := make(chan struct{}, 20)
+
 	for i := 1; i < lastPage; i++ {
+		sem <- struct{}{}
 		go func(i int) {
-			defer wg.Done()
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
 
 			opts := *options // copy
 			opts.Page = i + 1
