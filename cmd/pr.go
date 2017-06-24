@@ -121,8 +121,8 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 func getRepoOwnerAndName(url string) (string, string) {
 	s := strings.TrimPrefix(url, "https://api.github.com/repos/")
 	i := strings.IndexByte(s, '/')
-	j := strings.IndexByte(s[i:], '/')
-	return s[:i], s[i+1 : j]
+	j := strings.IndexByte(s[i+1:], '/')
+	return s[:i], s[i+1:][:j]
 }
 
 func matchSlice(s string, sepsl []string) bool {
