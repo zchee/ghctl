@@ -65,8 +65,20 @@ func runStarList(cmd *cli.Command, args []string) error {
 		starUsername = args[0]
 	}
 
-	results, err := starList(ctx, starUsername)
-	if err != nil {
+	resultc, errc := listStarred(ctx, starUsername)
+
+	spin := newSpin()
+	var results []starListResult
+	i := 1
+	for res := range resultc {
+		spin.next("fetching", fmt.Sprintf("page: %d/%d", i, cap(resultc)))
+		results = append(results, appendStarResult(res)...)
+		i++
+	}
+	spin.flush()
+
+	// handle first error
+	if err := <-errc; err != nil {
 		return err
 	}
 
@@ -89,72 +101,67 @@ func runStarList(cmd *cli.Command, args []string) error {
 	return nil
 }
 
-func starList(ctx context.Context, username string) ([]starListResult, error) {
+func listStarred(ctx context.Context, username string) (<-chan []*github.StarredRepository, <-chan error) {
 	client := newClient(ctx)
 	options := &github.ActivityListStarredOptions{Sort: starListSort}
 	options.Page = 1
-	spin := newSpin()
+
+	errc := make(chan error, 1)
 
 	firstRepos, firstRes, err := client.Activity.ListStarred(ctx, username, options)
 	if err != nil {
-		if _, ok := err.(*github.RateLimitError); ok {
-			return nil, ErrRateLimit
-		}
-		return nil, errors.Wrap(err, "could not get list starred")
+		err = checkRateLimitError(err)
+		errc <- errors.Wrap(err, "could not get list starred")
+		return nil, errc
 	}
 	if len(firstRepos) == 0 {
-		return nil, errors.Errorf("%s user have not starred repository\n", username)
+		errc <- errors.Errorf("%s user have not starred repository\n", username)
+		return nil, errc
 	}
 
 	lastPage := firstRes.LastPage
 
-	resultsCh := make(chan []starListResult, lastPage)
-	resultsCh <- appendStarResult(firstRepos)
-	spin.next("fetching", fmt.Sprintf("page: %d/%d", 1, lastPage))
+	resultsc := make(chan []*github.StarredRepository, lastPage)
+	resultsc <- firstRepos
 
-	var wg sync.WaitGroup
-	wg.Add(lastPage - 1)
-	errs := make(chan error)
+	var errs []error
 	sem := make(chan struct{}, 20)
 
-	for i := 1; i < lastPage; i++ {
-		sem <- struct{}{}
-		go func(i int) {
-			defer func() {
-				<-sem
-				wg.Done()
-			}()
+	go func() {
+		var wg sync.WaitGroup
+		wg.Add(lastPage - 1)
+		for i := 1; i < lastPage; i++ {
+			sem <- struct{}{}
+			go func(i int) {
+				defer func() {
+					<-sem
+					wg.Done()
+				}()
 
-			opts := *options // copy
-			opts.Page = i + 1
-			repos, _, err := client.Activity.ListStarred(ctx, username, &opts)
-			if err != nil {
-				if _, ok := err.(*github.RateLimitError); ok {
-					errs <- errors.New("hit GitHub API rate limit")
+				opts := *options // copy
+				opts.Page = i + 1
+				repos, _, err := client.Activity.ListStarred(ctx, username, &opts)
+				if err != nil {
+					err = checkRateLimitError(err)
+					errs = append(errs, errors.Wrap(err, "could not get list starred"))
 					return
 				}
-				errs <- errors.Wrap(err, "could not get list starred")
-				return
+
+				resultsc <- repos
+			}(i)
+		}
+
+		go func() {
+			wg.Wait()
+			close(resultsc)
+			if len(errs) > 0 {
+				errc <- errs[0]
 			}
+			close(errc)
+		}()
+	}()
 
-			resultsCh <- appendStarResult(repos)
-			spin.next("fetching", fmt.Sprintf("page: %d/%d", len(resultsCh), lastPage))
-		}(i)
-	}
-	wg.Wait()
-	close(resultsCh)
-	spin.flush()
-
-	if len(errs) != 0 {
-		return nil, <-errs
-	}
-
-	var results []starListResult
-	for r := range resultsCh {
-		results = append(results, r...)
-	}
-
-	return results, nil
+	return resultsc, errc
 }
 
 func appendStarResult(repos []*github.StarredRepository) []starListResult {
