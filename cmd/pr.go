@@ -117,7 +117,7 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 }
 
 // getRepoOwnerAndName returns the repository owner and name.
-// url assume github packages GetURL() method result.
+// url assume github.Repository.GetURL() method result.
 func getRepoOwnerAndName(url string) (string, string) {
 	s := strings.TrimPrefix(url, "https://api.github.com/repos/")
 	i := strings.IndexByte(s, '/')
