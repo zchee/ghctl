@@ -1,11 +1,17 @@
+GO_BUILD_FLAGS = -v -x 
 ifneq ($(GHCTL_DEBUG),)
-default: install/race
-else
-default: install
+GO_BUILD_FLAGS += -race
 endif
 
-install:
-	go install -v -x .
+bulid: bin/ghctl
 
-install/race:
-	go install -v -x -race .
+bin/ghctl:
+	go build -o $@ $(GO_BUILD_FLAGS) .
+
+install:
+	go install $(GO_BUILD_FLAGS) .
+
+clean:
+	rm -rf bin
+
+.PHONY: build install clean
