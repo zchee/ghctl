@@ -110,7 +110,7 @@ func runRepoList(cmd *cli.Command, args []string) error {
 		firstUrls[i] = repo.GetHTMLURL()
 	}
 	repoURLsCh <- firstUrls
-	go spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
+	spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
 
 	var wg sync.WaitGroup
 	wg.Add(lastPage - 1)
