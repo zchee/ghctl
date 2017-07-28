@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/google/go-github/github"
@@ -60,16 +61,21 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 		return err
 	}
 
+	repos := []string{}
+	if len(args) > 0 {
+		repos = args
+	}
+
 	buf := new(bytes.Buffer)
 	page := 1
-	if err := getPullRequest(ctx, client, buf, user.GetLogin(), pullRequestStateOpen, page); err != nil {
+	if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateOpen, page); err != nil {
 		return err
 	}
-	if err := getPullRequest(ctx, client, buf, user.GetLogin(), pullRequestStateClosed, page); err != nil {
+	if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateClosed, page); err != nil {
 		return err
 	}
 
-	fmt.Print(buf.String())
+	fmt.Fprint(os.Stdout, buf.String())
 
 	return nil
 }
@@ -81,7 +87,7 @@ const (
 	pullRequestStateClosed pullRequestState = "closed"
 )
 
-func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, username string, state pullRequestState, page int) error {
+func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, username string, repos []string, state pullRequestState, page int) error {
 	order := "asc"
 	if prReverse {
 		order = "desc"
@@ -94,7 +100,18 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 		},
 	}
 
-	prs, resp, err := client.Search.Issues(ctx, fmt.Sprintf("author:%s state:%s type:pr", username, state), options)
+	sep := " "
+	query := "author:" + username + sep + "state:" + string(state) + sep + "type:pr"
+	if len(repos) > 0 {
+		for _, repo := range repos {
+			if strings.Contains(repo, "/") {
+				query += sep + "repo:" + repo
+			} else {
+				query += sep + "user:" + repo
+			}
+		}
+	}
+	prs, resp, err := client.Search.Issues(ctx, query, options)
 	if err != nil {
 		return errors.Wrap(checkRateLimitError(err), "could not get search pull request result")
 	}
@@ -113,7 +130,7 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 	}
 	page = resp.NextPage
 
-	return getPullRequest(ctx, client, buf, username, state, page)
+	return getPullRequest(ctx, client, buf, username, repos, state, page)
 }
 
 // getRepoOwnerAndName returns the repository owner and name.
