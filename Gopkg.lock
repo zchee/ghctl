@@ -11,13 +11,13 @@
   branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "5a0f697c9ed9d68fef0116532c6e05cfeae00e55"
+  revision = "748d386b5c1ea99658fd69fe9f03991ce86a90c1"
 
 [[projects]]
   branch = "master"
   name = "github.com/google/go-github"
   packages = ["github"]
-  revision = "7a51fb928f52a196d5f31daefb8a489453ef54ff"
+  revision = "35d38108ba83757e9b6fc00e4ba7e2d597c651be"
 
 [[projects]]
   branch = "master"
@@ -34,8 +34,8 @@
 [[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
-  revision = "d228849504861217f796da67fae4f6e347643f15"
-  version = "v0.0.7"
+  revision = "941b50ebc6efddf4c41c8e4537a5f68a4e686b24"
+  version = "v0.0.8"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -47,19 +47,25 @@
   branch = "master"
   name = "github.com/rhysd/locerr"
   packages = ["."]
-  revision = "fb50ff2776896b096584a74f33fad9ca0f2f9d6a"
+  revision = "9e34f7a52ee78bbc623dd8c9ca82c08b27391101"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/skratchdot/open-golang"
+  packages = ["open"]
+  revision = "75fb7ed4208cf72d323d7d02fd1a5964a7a9073c"
 
 [[projects]]
   branch = "master"
   name = "github.com/spf13/cobra"
   packages = ["."]
-  revision = "99ff9334bda26384b5ef4a4aaa4d444d29bdde73"
+  revision = "34594c771f2c18301dc152640ad40ece28795373"
 
 [[projects]]
-  branch = "master"
   name = "github.com/spf13/pflag"
   packages = ["."]
   revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -70,20 +76,20 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "59a0b19b5533c7977ddeb86b017bf507ed407b12"
+  packages = ["context","context/ctxhttp"]
+  revision = "f5079bd7f6f74e23c4d65efa0f4ce14cbd6a3c0f"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/oauth2"
   packages = [".","internal"]
-  revision = "f047394b6d14284165300fd82dad67edb3a4d7f6"
+  revision = "b53b38ad8a6435bd399ea76d0fa74f23149cca4e"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "b90f89a1e7a9c1f6b918820b3daa7f08488c8594"
+  revision = "35ef4487ce0a1ea5d4b616ffe71e34febe723695"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -94,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8463643023085a6a3e542353892e046b0ee12399c4adfee0703c3762552854f8"
+  inputs-digest = "1a4ec4b0255ade788f501a8ce4100a7dd3f4b3773988ca147c307e414d042184"
   solver-name = "gps-cdcl"
   solver-version = 1
