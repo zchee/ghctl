@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/go-github/github"
 	cli "github.com/spf13/cobra"
@@ -67,6 +68,8 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 	defer cancel()
 
 	client := newClient(ctx)
+	spin := newSpin()
+
 	user, err := getUser(ctx, client)
 	if err != nil {
 		return err
@@ -79,6 +82,20 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 
 	buf := new(bytes.Buffer)
 	page := 1
+
+	done := make(chan struct{}, 1)
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				spin.next("fetching pull request list")
+				time.Sleep(500 * time.Millisecond)
+			}
+		}
+	}()
+
 	if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateClosed, page); err != nil {
 		return err
 	}
@@ -87,6 +104,8 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 			return err
 		}
 	}
+	done <- struct{}{}
+	spin.flush()
 
 	fmt.Fprint(os.Stdout, buf.String())
 
