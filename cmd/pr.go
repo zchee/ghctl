@@ -39,6 +39,8 @@ var (
 	prIgnoreOwners []string
 	prIgnoreRepos  []string
 	prReverse      bool
+	prMarkdown     bool
+	prAll          bool
 )
 
 func init() {
@@ -49,7 +51,16 @@ func init() {
 	prListCmd.Flags().StringSliceVar(&prIgnoreOwners, "ignore-owner", nil, "ignore any owner repositories")
 	prListCmd.Flags().StringSliceVar(&prIgnoreRepos, "ignore-repo", nil, "ignore any repository")
 	prListCmd.Flags().BoolVar(&prReverse, "reverse", false, "reverse of sort order")
+	prListCmd.Flags().BoolVarP(&prMarkdown, "markdown", "m", false, "output markdown syntax")
+	prListCmd.Flags().BoolVarP(&prAll, "all", "a", false, "output all pull request (default: merged)")
 }
+
+type pullRequestState string
+
+const (
+	pullRequestStateOpen   pullRequestState = "open"
+	pullRequestStateClosed pullRequestState = "closed"
+)
 
 func runPullRequestList(cmd *cli.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -68,11 +79,13 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 
 	buf := new(bytes.Buffer)
 	page := 1
-	if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateOpen, page); err != nil {
-		return err
-	}
 	if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateClosed, page); err != nil {
 		return err
+	}
+	if prAll {
+		if err := getPullRequest(ctx, client, buf, user.GetLogin(), repos, pullRequestStateOpen, page); err != nil {
+			return err
+		}
 	}
 
 	fmt.Fprint(os.Stdout, buf.String())
@@ -80,20 +93,13 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 	return nil
 }
 
-type pullRequestState string
-
-const (
-	pullRequestStateOpen   pullRequestState = "open"
-	pullRequestStateClosed pullRequestState = "closed"
-)
-
 func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, username string, repos []string, state pullRequestState, page int) error {
 	order := "asc"
 	if prReverse {
 		order = "desc"
 	}
 	options := &github.SearchOptions{
-		Sort:  "created",
+		Sort:  "updated",
 		Order: order,
 		ListOptions: github.ListOptions{
 			Page: page,
@@ -120,6 +126,10 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 		// TODO(zchee): check flag whether the nil
 		owner, repo := getRepoOwnerAndName(pr.GetURL())
 		if matchSlice(owner, prIgnoreOwners) || matchSlice(repo, prIgnoreOwners) {
+			continue
+		}
+		if prMarkdown {
+			buf.Write([]byte(fmt.Sprintf("- [%s](%s)\n", pr.GetTitle(), pr.GetHTMLURL())))
 			continue
 		}
 		buf.Write([]byte(fmt.Sprintf("url: %s, created: %s, title: %s\n", pr.GetHTMLURL(), pr.GetCreatedAt(), pr.GetTitle())))
