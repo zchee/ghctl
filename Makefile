@@ -5,9 +5,9 @@ ifneq ($(GHCTL_DEBUG),)
 GO_BUILD_FLAGS += -race
 endif
 
-bulid: bin/ghctl
+bulid: ghctl
 
-bin/ghctl: $(GO_SRCS)
+ghctl: $(GO_SRCS)
 	go build -o $@ $(GO_BUILD_FLAGS) .
 
 install: $(GO_SRCS)

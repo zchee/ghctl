@@ -20,4 +20,4 @@
 *.pprof
 
 # binary
-bin/*
+/ghctl
