@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"github.com/google/go-github/github"
-	"github.com/zchee/ghctl/internal/errors"
+	"github.com/pkg/errors"
 )
 
 var (

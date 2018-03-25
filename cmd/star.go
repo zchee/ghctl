@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/go-github/github"
 	cli "github.com/spf13/cobra"
-	"github.com/zchee/ghctl/internal/errors"
+	"github.com/pkg/errors"
 )
 
 // starCmd represents the star command

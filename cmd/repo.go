@@ -18,7 +18,7 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/skratchdot/open-golang/open"
 	cli "github.com/spf13/cobra"
-	"github.com/zchee/ghctl/internal/errors"
+	"github.com/pkg/errors"
 )
 
 // repoCmd represents the repo command

@@ -13,7 +13,7 @@ import (
 	"github.com/fatih/color"
 	cli "github.com/spf13/cobra"
 	spin "github.com/tj/go-spin"
-	"github.com/zchee/ghctl/internal/errors"
+	"github.com/pkg/errors"
 )
 
 type checkType int

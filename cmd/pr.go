@@ -15,7 +15,7 @@ import (
 
 	"github.com/google/go-github/github"
 	cli "github.com/spf13/cobra"
-	"github.com/zchee/ghctl/internal/errors"
+	"github.com/pkg/errors"
 )
 
 // prCmd represents the pr command
