@@ -43,7 +43,7 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(starCmd)
+	rootCmd.AddCommand(starCmd)
 
 	starCmd.AddCommand(starListCmd)
 	starCmd.Flags().BoolVar(&starJSON, "json", false, "prints in JSON format instead of raw print")

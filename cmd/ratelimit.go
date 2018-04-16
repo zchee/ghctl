@@ -23,7 +23,7 @@ var rateLimitCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(rateLimitCmd)
+	rootCmd.AddCommand(rateLimitCmd)
 
 	rateLimitCmd.Flags().String("token", "", "GitHub Personal access token")
 }

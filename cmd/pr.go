@@ -46,7 +46,7 @@ var (
 )
 
 func init() {
-	RootCmd.AddCommand(prCmd)
+	rootCmd.AddCommand(prCmd)
 
 	prCmd.AddCommand(prListCmd)
 

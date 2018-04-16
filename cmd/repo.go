@@ -19,10 +19,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
+	errpkg "github.com/zchee/ghctl/pkg/errors"
 	"github.com/zchee/ghctl/pkg/spin"
 )
 
-// repoCmd represents the repo command
+// repoCmd represents the repo command.
 var repoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "manage the repository",
@@ -34,7 +35,7 @@ var (
 		Short: "List the users repositories",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoList(cmd, args); err != nil {
-				cmd.Println(err)
+				fmt.Fprint(cmd.OutOrStderr(), err)
 			}
 		},
 	}
@@ -43,7 +44,7 @@ var (
 		Short: "Delete repository",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoDelete(cmd, args); err != nil {
-				cmd.Println(err)
+				fmt.Fprint(cmd.OutOrStderr(), err)
 			}
 		},
 	}
@@ -52,79 +53,93 @@ var (
 		Short: "Open repository",
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoOpen(cmd, args); err != nil {
-				cmd.Println(err)
+				fmt.Fprint(cmd.OutOrStderr(), err)
 			}
 		},
 	}
 )
 
-var flags = &RepoFlags{}
-
-type RepoFlags struct {
-	repoType string
+type repoFlags struct {
+	typ         string
+	affiliation string
 }
 
+var (
+	flags = &repoFlags{}
+)
+
 func init() {
-	RootCmd.AddCommand(repoCmd)
+	// init
+	rootCmd.AddCommand(repoCmd)
 
+	// List
 	repoCmd.AddCommand(repoListCmd)
-	repoListCmd.Flags().StringVarP(&flags.repoType, "type", "t", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
+	repoListCmd.Flags().StringVarP(&flags.typ, "type", "t", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
+	repoListCmd.Flags().StringVarP(&flags.affiliation, "affiliation", "a", "", "Comma separated list repos of given affiliation[s]. [owner,collaborator,organization_member]")
 
+	// Delete
 	repoCmd.AddCommand(repoDeleteCmd)
+
+	// Open
 	repoCmd.AddCommand(repoOpenCmd)
 }
 
 func runRepoList(cmd *cobra.Command, args []string) error {
-	var repoUsername string
-	if len(args) > 0 {
-		repoUsername = args[0]
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	client := newClient(ctx)
-	options := github.RepositoryListOptions{
-		Type: flags.repoType,
-	}
-	if flags.repoType == "private" {
-		options.Visibility = flags.repoType
-	}
-	options.Page = 1
 	s := spin.NewSpin()
 
+	opts := github.RepositoryListOptions{
+		Type: flags.typ,
+		ListOptions: github.ListOptions{
+			Page: 1,
+		},
+	}
+	switch flags.typ {
+	case "public", "private":
+		opts.Visibility = flags.typ
+	}
+	if flags.affiliation != "" {
+		opts.Affiliation = flags.affiliation
+	}
+
+	var repoName string
+	// If empty, use login user
+	if len(args) > 0 {
+		repoName = args[0]
+	}
 	// pre-fetch page 1 for the get LastPage size
-	firstRepos, firstRes, err := client.Repositories.List(ctx, repoUsername, &options)
+	firstRepos, firstResp, err := client.Repositories.List(ctx, repoName, &opts)
 	if err != nil {
-		if _, ok := err.(*github.RateLimitError); ok {
-			return errors.New("hit GitHub API rate limit")
+		if errpkg.IsRateLimitErr(err) {
+			return errors.New("repo: hit GitHub API rate limit")
 		}
 		if ctx.Err() != nil {
 			return nil
 		}
-		return errors.Wrap(err, "could not get list all repositories")
+		return errors.Wrap(err, "repo: could not get list all repositories")
 	}
 
-	lastPage := firstRes.LastPage
+	lastPage := firstResp.LastPage
 	if lastPage == 0 {
-		return errors.Errorf("%s user have not %q repository", repoUsername, flags.repoType)
+		return errors.Errorf("repo: %s user have not %q repository", repoName, flags.typ)
 	}
 
 	// make lastPage size chan for parallel fetch
-	repoURLsCh := make(chan []string, lastPage)
-
-	// send first repository url to chan
-	firstUrls := make([]string, len(firstRepos))
+	reposCh := make(chan []string, lastPage)
+	uris := make([]string, len(firstRepos))
 	for i, repo := range firstRepos {
-		firstUrls[i] = repo.GetHTMLURL()
+		uris[i] = repo.GetHTMLURL()
 	}
-	repoURLsCh <- firstUrls
-	s.Next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
+	reposCh <- uris
+	s.Next(spin.FetchMsg, fmt.Sprintf("page: %d/%d", 0, lastPage))
 
-	var wg sync.WaitGroup
+	wg := new(sync.WaitGroup)
 	wg.Add(lastPage - 1)
-	errs := make(chan error)
 	sem := make(chan struct{}, 20)
+	errs := make(chan error)
 
 	// alloc i to 1 because already fetched page 1
 	for i := 1; i < lastPage; i++ {
@@ -136,13 +151,13 @@ func runRepoList(cmd *cobra.Command, args []string) error {
 			}()
 
 			opts.Page = i + 1 // paging is based 1
-			repos, _, err := client.Repositories.List(ctx, repoUsername, &opts)
+			repos, _, err := client.Repositories.List(ctx, repoName, &opts)
 			if err != nil {
-				if _, ok := err.(*github.RateLimitError); ok {
-					errs <- errors.New("hit GitHub API rate limit")
+				if errpkg.IsRateLimitErr(err) {
+					errs <- errpkg.ErrRateLimit
 					return
 				}
-				errs <- errors.Wrap(err, "could not get list all repositories")
+				errs <- errors.Wrap(err, "repo: could not get list all repositories")
 				return
 			}
 
@@ -150,25 +165,28 @@ func runRepoList(cmd *cobra.Command, args []string) error {
 			for j, repo := range repos {
 				urls[j] = repo.GetHTMLURL()
 			}
-			repoURLsCh <- urls
-			s.Next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
-		}(options, i)
+			reposCh <- urls
+			s.Next(spin.FetchMsg, fmt.Sprintf("page: %d/%d", len(reposCh), lastPage))
+		}(opts, i)
 	}
-	wg.Wait()
-	close(repoURLsCh)
-	s.Flush()
+
+	go func() {
+		wg.Wait()
+		close(reposCh)
+		s.Flush()
+	}()
 
 	if len(errs) != 0 {
 		return <-errs
 	}
 
-	var repoURLs []string
-	for rp := range repoURLsCh {
-		repoURLs = append(repoURLs, rp...)
+	var repos []string
+	for r := range reposCh {
+		repos = append(repos, r...)
 	}
-	sort.Strings(repoURLs)
+	sort.Strings(repos)
 
-	fmt.Print(strings.Join(repoURLs, "\n"))
+	fmt.Print(strings.Join(repos, "\n"))
 
 	return nil
 }
