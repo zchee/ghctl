@@ -16,40 +16,41 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
-	"github.com/skratchdot/open-golang/open"
-	cli "github.com/spf13/cobra"
 	"github.com/pkg/errors"
+	"github.com/skratchdot/open-golang/open"
+	"github.com/spf13/cobra"
+	"github.com/zchee/ghctl/pkg/spin"
 )
 
 // repoCmd represents the repo command
-var repoCmd = &cli.Command{
+var repoCmd = &cobra.Command{
 	Use:   "repo",
 	Short: "manage the repository",
 }
 
 var (
-	repoListCmd = &cli.Command{
-		Use:   "list",
+	repoListCmd = &cobra.Command{
+		Use:   "list <username|orgs>",
 		Short: "List the users repositories",
-		Run: func(cmd *cli.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoList(cmd, args); err != nil {
 				cmd.Println(err)
 			}
 		},
 	}
-	repoDeleteCmd = &cli.Command{
+	repoDeleteCmd = &cobra.Command{
 		Use:   "delete",
 		Short: "Delete repository",
-		Run: func(cmd *cli.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoDelete(cmd, args); err != nil {
 				cmd.Println(err)
 			}
 		},
 	}
-	repoOpenCmd = &cli.Command{
+	repoOpenCmd = &cobra.Command{
 		Use:   "open",
 		Short: "Open repository",
-		Run: func(cmd *cli.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := runRepoOpen(cmd, args); err != nil {
 				cmd.Println(err)
 			}
@@ -57,18 +58,23 @@ var (
 	}
 )
 
+var flags = &RepoFlags{}
+
+type RepoFlags struct {
+	repoType string
+}
+
 func init() {
 	RootCmd.AddCommand(repoCmd)
 
 	repoCmd.AddCommand(repoListCmd)
+	repoListCmd.Flags().StringVarP(&flags.repoType, "type", "t", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
+
 	repoCmd.AddCommand(repoDeleteCmd)
 	repoCmd.AddCommand(repoOpenCmd)
-
-	repoListCmd.Flags().String("type", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
 }
 
-func runRepoList(cmd *cli.Command, args []string) error {
-	repoListType := cmd.Flag("type")
+func runRepoList(cmd *cobra.Command, args []string) error {
 	var repoUsername string
 	if len(args) > 0 {
 		repoUsername = args[0]
@@ -79,10 +85,13 @@ func runRepoList(cmd *cli.Command, args []string) error {
 
 	client := newClient(ctx)
 	options := github.RepositoryListOptions{
-		Type: repoListType.Value.String(),
+		Type: flags.repoType,
+	}
+	if flags.repoType == "private" {
+		options.Visibility = flags.repoType
 	}
 	options.Page = 1
-	spin := newSpin()
+	s := spin.NewSpin()
 
 	// pre-fetch page 1 for the get LastPage size
 	firstRepos, firstRes, err := client.Repositories.List(ctx, repoUsername, &options)
@@ -98,7 +107,7 @@ func runRepoList(cmd *cli.Command, args []string) error {
 
 	lastPage := firstRes.LastPage
 	if lastPage == 0 {
-		return errors.Errorf("%s user have not %q repository", repoUsername, repoListType.Value.String())
+		return errors.Errorf("%s user have not %q repository", repoUsername, flags.repoType)
 	}
 
 	// make lastPage size chan for parallel fetch
@@ -110,7 +119,7 @@ func runRepoList(cmd *cli.Command, args []string) error {
 		firstUrls[i] = repo.GetHTMLURL()
 	}
 	repoURLsCh <- firstUrls
-	spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
+	s.Next("fetching repository list", fmt.Sprintf("page: %d/%d", 0, lastPage))
 
 	var wg sync.WaitGroup
 	wg.Add(lastPage - 1)
@@ -142,12 +151,12 @@ func runRepoList(cmd *cli.Command, args []string) error {
 				urls[j] = repo.GetHTMLURL()
 			}
 			repoURLsCh <- urls
-			spin.next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
+			s.Next("fetching repository list", fmt.Sprintf("page: %d/%d", len(repoURLsCh), lastPage))
 		}(options, i)
 	}
 	wg.Wait()
 	close(repoURLsCh)
-	spin.flush()
+	s.Flush()
 
 	if len(errs) != 0 {
 		return <-errs
@@ -164,7 +173,7 @@ func runRepoList(cmd *cli.Command, args []string) error {
 	return nil
 }
 
-func runRepoDelete(cmd *cli.Command, args []string) error {
+func runRepoDelete(cmd *cobra.Command, args []string) error {
 	if err := checkArgs(cmd, args, 1, exactArgs, "<repository>"); err != nil {
 		return err
 	}
@@ -174,7 +183,7 @@ func runRepoDelete(cmd *cli.Command, args []string) error {
 	defer cancel()
 
 	client := newClient(ctx)
-	spin := newSpin()
+	s := spin.NewSpin()
 	user, err := getUser(ctx, client)
 	if err != nil {
 		return errors.Wrap(err, "could not get user information")
@@ -182,11 +191,11 @@ func runRepoDelete(cmd *cli.Command, args []string) error {
 
 	fmt.Printf("remove repository %q? (y,n) ", repoDeleteName)
 	r := bufio.NewReader(os.Stdin)
-	ans, err := r.ReadString('\n')
+	confirm, err := r.ReadString('\n')
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(ans) != "y" {
+	if strings.TrimSpace(confirm) != "y" {
 		return errors.New("cancelled")
 	}
 	done := make(chan struct{}, 1)
@@ -196,14 +205,14 @@ func runRepoDelete(cmd *cli.Command, args []string) error {
 			case <-done:
 				return
 			default:
-				spin.next("deleting")
+				s.Next("deleting")
 				time.Sleep(time.Millisecond)
 			}
 		}
 	}()
 	_, err = client.Repositories.Delete(ctx, user.GetLogin(), repoDeleteName)
 	done <- struct{}{}
-	spin.flush()
+	s.Flush()
 	if err != nil {
 		return errors.Wrapf(err, "could not delete %s repository", repoDeleteName)
 	}
@@ -211,7 +220,7 @@ func runRepoDelete(cmd *cli.Command, args []string) error {
 	return nil
 }
 
-func runRepoOpen(cmd *cli.Command, args []string) error {
+func runRepoOpen(cmd *cobra.Command, args []string) error {
 	if err := checkArgs(cmd, args, 1, exactArgs, "<username/repository>"); err != nil {
 		return err
 	}

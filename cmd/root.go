@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"os"
 
-	cli "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 // RootCmd represents the base command when called without any subcommands
-var RootCmd = &cli.Command{
+var RootCmd = &cobra.Command{
 	Use:   "ghctl",
 	Short: "A CLI tool for GitHub repositories",
 }

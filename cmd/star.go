@@ -13,21 +13,22 @@ import (
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
-	cli "github.com/spf13/cobra"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/zchee/ghctl/pkg/spin"
 )
 
 // starCmd represents the star command
-var starCmd = &cli.Command{
+var starCmd = &cobra.Command{
 	Use:   "star",
 	Short: "manage the star",
 }
 
 var (
-	starListCmd = &cli.Command{
+	starListCmd = &cobra.Command{
 		Use:   "list",
 		Short: "List the [username] starred repositories. If [username] is empty, use authenticated user by default",
-		Run: func(cmd *cli.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := runStarList(cmd, args); err != nil {
 				cmd.Println(err)
 			}
@@ -56,7 +57,7 @@ type starListResult struct {
 	URL       string `json:"url"`
 }
 
-func runStarList(cmd *cli.Command, args []string) error {
+func runStarList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -67,15 +68,15 @@ func runStarList(cmd *cli.Command, args []string) error {
 
 	resultc, errc := listStarred(ctx, starUsername)
 
-	spin := newSpin()
+	s := spin.NewSpin()
 	var results []starListResult
 	i := 1
 	for res := range resultc {
-		spin.next("fetching", fmt.Sprintf("page: %d/%d", i, cap(resultc)))
+		s.Next("fetching", fmt.Sprintf("page: %d/%d", i, cap(resultc)))
 		results = append(results, appendStarResult(res)...)
 		i++
 	}
-	spin.flush()
+	s.Flush()
 
 	// handle first error
 	if err := <-errc; err != nil {

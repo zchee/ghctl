@@ -14,21 +14,22 @@ import (
 	"time"
 
 	"github.com/google/go-github/github"
-	cli "github.com/spf13/cobra"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/zchee/ghctl/pkg/spin"
 )
 
 // prCmd represents the pr command
-var prCmd = &cli.Command{
+var prCmd = &cobra.Command{
 	Use:   "pr",
 	Short: "manage the pull request",
 }
 
 var (
-	prListCmd = &cli.Command{
+	prListCmd = &cobra.Command{
 		Use:   "list",
 		Short: "List the your sent pull requests",
-		Run: func(cmd *cli.Command, args []string) {
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := runPullRequestList(cmd, args); err != nil {
 				cmd.Println(err)
 			}
@@ -63,12 +64,12 @@ const (
 	pullRequestStateClosed pullRequestState = "closed"
 )
 
-func runPullRequestList(cmd *cli.Command, args []string) error {
+func runPullRequestList(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	client := newClient(ctx)
-	spin := newSpin()
+	s := spin.NewSpin()
 
 	user, err := getUser(ctx, client)
 	if err != nil {
@@ -90,7 +91,7 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 			case <-done:
 				return
 			default:
-				spin.next("fetching pull request list")
+				s.Next("fetching pull request list")
 				time.Sleep(500 * time.Millisecond)
 			}
 		}
@@ -105,7 +106,7 @@ func runPullRequestList(cmd *cli.Command, args []string) error {
 		}
 	}
 	done <- struct{}{}
-	spin.flush()
+	s.Flush()
 
 	fmt.Fprint(os.Stdout, buf.String())
 

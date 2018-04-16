@@ -8,14 +8,14 @@ import (
 	"context"
 	"fmt"
 
-	cli "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 // rateLimit represents the ratelimit command
-var rateLimitCmd = &cli.Command{
+var rateLimitCmd = &cobra.Command{
 	Use:   "ratelimit",
 	Short: "check your API rate limit",
-	Run: func(cmd *cli.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		if err := runRateLimit(cmd, args); err != nil {
 			cmd.Println(err)
 		}
@@ -28,7 +28,7 @@ func init() {
 	rateLimitCmd.Flags().String("token", "", "GitHub Personal access token")
 }
 
-func runRateLimit(cmd *cli.Command, args []string) error {
+func runRateLimit(cmd *cobra.Command, args []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

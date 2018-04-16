@@ -5,15 +5,10 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
 	"strings"
-	"sync"
 
-	"github.com/fatih/color"
-	cli "github.com/spf13/cobra"
-	spin "github.com/tj/go-spin"
 	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
 type checkType int
@@ -24,7 +19,7 @@ const (
 	maxArgs
 )
 
-func checkArgs(cmd *cli.Command, args []string, expected int, typ checkType, value ...string) error {
+func checkArgs(cmd *cobra.Command, args []string, expected int, typ checkType, value ...string) error {
 	cmdName := cmd.Name()
 	var err error
 	switch typ {
@@ -46,28 +41,4 @@ func checkArgs(cmd *cli.Command, args []string, expected int, typ checkType, val
 		return err
 	}
 	return nil
-}
-
-// Spin represents a loading spinner.
-type Spin struct {
-	s  *spin.Spinner
-	mu sync.Mutex
-}
-
-func newSpin() *Spin {
-	s := spin.New()
-	s.Set(spin.Spin1)
-	return &Spin{
-		s: s,
-	}
-}
-
-func (s *Spin) next(desc ...string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	fmt.Fprintf(os.Stderr, "\r%s %s %s", color.BlueString(desc[0]), s.s.Next(), strings.Join(desc[1:], " "))
-}
-
-func (s *Spin) flush() {
-	fmt.Fprint(os.Stderr, "\r")
 }
