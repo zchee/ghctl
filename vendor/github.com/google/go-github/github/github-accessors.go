@@ -1764,6 +1764,22 @@ func (d *DeploymentStatusRequest) GetState() string {
 	return *d.State
 }
 
+// GetTeams returns the Teams field if it's non-nil, zero value otherwise.
+func (d *DismissalRestrictionsRequest) GetTeams() []string {
+	if d == nil || d.Teams == nil {
+		return nil
+	}
+	return *d.Teams
+}
+
+// GetUsers returns the Users field if it's non-nil, zero value otherwise.
+func (d *DismissalRestrictionsRequest) GetUsers() []string {
+	if d == nil || d.Users == nil {
+		return nil
+	}
+	return *d.Users
+}
+
 // GetBody returns the Body field if it's non-nil, zero value otherwise.
 func (d *DraftReviewComment) GetBody() string {
 	if d == nil || d.Body == nil {
@@ -3140,6 +3156,14 @@ func (i *Issue) GetUser() *User {
 	return i.User
 }
 
+// GetAuthorAssociation returns the AuthorAssociation field if it's non-nil, zero value otherwise.
+func (i *IssueComment) GetAuthorAssociation() string {
+	if i == nil || i.AuthorAssociation == nil {
+		return ""
+	}
+	return *i.AuthorAssociation
+}
+
 // GetBody returns the Body field if it's non-nil, zero value otherwise.
 func (i *IssueComment) GetBody() string {
 	if i == nil || i.Body == nil {
@@ -3572,6 +3596,22 @@ func (l *Label) GetColor() string {
 	return *l.Color
 }
 
+// GetDefault returns the Default field if it's non-nil, zero value otherwise.
+func (l *Label) GetDefault() bool {
+	if l == nil || l.Default == nil {
+		return false
+	}
+	return *l.Default
+}
+
+// GetDescription returns the Description field if it's non-nil, zero value otherwise.
+func (l *Label) GetDescription() string {
+	if l == nil || l.Description == nil {
+		return ""
+	}
+	return *l.Description
+}
+
 // GetID returns the ID field if it's non-nil, zero value otherwise.
 func (l *Label) GetID() int64 {
 	if l == nil || l.ID == nil {
@@ -3650,6 +3690,78 @@ func (l *LabelEvent) GetRepo() *Repository {
 		return nil
 	}
 	return l.Repo
+}
+
+// GetColor returns the Color field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetColor() string {
+	if l == nil || l.Color == nil {
+		return ""
+	}
+	return *l.Color
+}
+
+// GetDefault returns the Default field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetDefault() bool {
+	if l == nil || l.Default == nil {
+		return false
+	}
+	return *l.Default
+}
+
+// GetDescription returns the Description field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetDescription() string {
+	if l == nil || l.Description == nil {
+		return ""
+	}
+	return *l.Description
+}
+
+// GetID returns the ID field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetID() int64 {
+	if l == nil || l.ID == nil {
+		return 0
+	}
+	return *l.ID
+}
+
+// GetName returns the Name field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetName() string {
+	if l == nil || l.Name == nil {
+		return ""
+	}
+	return *l.Name
+}
+
+// GetScore returns the Score field.
+func (l *LabelResult) GetScore() *float64 {
+	if l == nil {
+		return nil
+	}
+	return l.Score
+}
+
+// GetURL returns the URL field if it's non-nil, zero value otherwise.
+func (l *LabelResult) GetURL() string {
+	if l == nil || l.URL == nil {
+		return ""
+	}
+	return *l.URL
+}
+
+// GetIncompleteResults returns the IncompleteResults field if it's non-nil, zero value otherwise.
+func (l *LabelsSearchResult) GetIncompleteResults() bool {
+	if l == nil || l.IncompleteResults == nil {
+		return false
+	}
+	return *l.IncompleteResults
+}
+
+// GetTotal returns the Total field if it's non-nil, zero value otherwise.
+func (l *LabelsSearchResult) GetTotal() int {
+	if l == nil || l.Total == nil {
+		return 0
+	}
+	return *l.Total
 }
 
 // GetOID returns the OID field if it's non-nil, zero value otherwise.
@@ -6098,6 +6210,14 @@ func (p *PullRequestBranch) GetUser() *User {
 		return nil
 	}
 	return p.User
+}
+
+// GetAuthorAssociation returns the AuthorAssociation field if it's non-nil, zero value otherwise.
+func (p *PullRequestComment) GetAuthorAssociation() string {
+	if p == nil || p.AuthorAssociation == nil {
+		return ""
+	}
+	return *p.AuthorAssociation
 }
 
 // GetBody returns the Body field if it's non-nil, zero value otherwise.

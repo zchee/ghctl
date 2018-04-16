@@ -9,8 +9,8 @@ ignored = [
 
 [prune]
   go-tests = true
-  non-go = true
   unused-packages = true
+  non-go = true
 
 [[constraint]]
   name = "github.com/fatih/color"
