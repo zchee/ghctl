@@ -14,6 +14,10 @@ import (
 	spin "github.com/tj/go-spin"
 )
 
+const (
+	FetchMsg = "fetching repository list"
+)
+
 // Spin represents a loading spinner.
 type Spin struct {
 	s  *spin.Spinner
