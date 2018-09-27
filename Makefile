@@ -1,7 +1,9 @@
+PKG := github.com/zchee/ghctl
+BIN := ghctl
 GO_SRCS = $(shell find . -type f \( -name '*.go' -and -not -iwholename '*testdata' \) )
 
 GO_BUILD_FLAGS = -v -x 
-ifneq ($(GHCTL_DEBUG),)
+ifneq ($(RACE),)
 GO_BUILD_FLAGS += -race
 endif
 
@@ -14,6 +16,6 @@ install: $(GO_SRCS)
 	go install $(GO_BUILD_FLAGS) .
 
 clean:
-	rm -rf bin
+	rm -rf ${BIN} *.out
 
 .PHONY: build install clean
