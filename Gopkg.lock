@@ -7,7 +7,7 @@
   name = "github.com/fatih/color"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "2d684516a8861da43017284349b7e303e809ac21"
+  revision = "3f9d52f7176a6927daacff70a3e8d1dc2025c53e"
 
 [[projects]]
   digest = "1:97df918963298c287643883209a2c3f642e6593379f97ab400c2a2e219ab647d"
@@ -19,11 +19,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f4f203acd8b11b8747bdcd91696a01dbc95ccb9e2ca2db6abf81c3a4f5e950ce"
+  digest = "1:84cc550d88693f0a406e9806380c735f26f4a9f3206523abf5adc25a8f0a8661"
   name = "github.com/google/go-github"
   packages = ["github"]
   pruneopts = "NUT"
-  revision = "f55b50f38167644bb7e4be03d9a2bde71d435239"
+  revision = "a92f7df405f9b83c01641d8b22d1c350a007c269"
 
 [[projects]]
   digest = "1:a63cff6b5d8b95638bfe300385d93b2a6d9d687734b863da8e09dc834510a690"
@@ -75,19 +75,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:455a9e33f7716f9a2e0d1f65e2d04941d311cd5cc40a96f957b2e4e8724a2faa"
+  digest = "1:25aa47e530aa7450b2a0b177fc6bc30b09248cfbb853788b90d7f8f247f80706"
   name = "github.com/spf13/cobra"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "8d114be902bc9f08717804830a55c48378108a28"
+  revision = "d2d81d9a96e23f0255397222bb0b4e3165e492dc"
 
 [[projects]]
-  digest = "1:e3707aeaccd2adc89eba6c062fec72116fe1fc1ba71097da85b4d8ae1668a675"
+  digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
-  version = "v1.0.2"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
 
 [[projects]]
   branch = "master"
@@ -99,36 +99,36 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d6b719875cf8091fbab38527d81d34e71f4521b9ee9ccfbd4a32cff2ac5af96e"
+  digest = "1:f8b491a7c25030a895a0e579742d07136e6958e77ef2d46e769db8eec4e58fcd"
   name = "golang.org/x/net"
   packages = [
     "context",
     "context/ctxhttp",
   ]
   pruneopts = "NUT"
-  revision = "4dfa2610cdf3b287375bbba5b8f2a14d3b01d8de"
+  revision = "351d144fa1fc0bd934e2408202be0c29f25e35a0"
 
 [[projects]]
   branch = "master"
-  digest = "1:db0ef10bef8ec68d343f7371d5d6006c1086b5882654e10e7cc9335bfb551b8d"
+  digest = "1:909616a132a79b36934f9a5eaa4f5caeaaadf06bc0080e6c748aebed83a2cd9e"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
     "internal",
   ]
   pruneopts = "NUT"
-  revision = "d2e6202438beef2727060aa7cabdd924d92ebfd9"
+  revision = "d668ce993890a79bda886613ee587a69dd5da7a6"
 
 [[projects]]
   branch = "master"
-  digest = "1:a293e09eb847ae14e4ae5157f27e55d4fd4ad89cc423697aee1725c20000239b"
+  digest = "1:134392bed1074be912a37ea13483f27e6e827f4e4d6cc319f69d3ac3617d5ac0"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "NUT"
-  revision = "c2ed4eda69e7f62900806e4cd6e45f0429f859fa"
+  revision = "4ed8d59d0b35e1e29334a206d1b3f38b1e5dfb31"
 
 [[projects]]
-  digest = "1:36354a269794d9cb4cebae233f65a966e818f763088370c8524726853a31c96f"
+  digest = "1:655acbef8faad33db29b6a35655341fb4a594e87e56635f05a3e70ed0bd7bd95"
   name = "google.golang.org/appengine"
   packages = [
     "internal",
@@ -140,8 +140,8 @@
     "urlfetch",
   ]
   pruneopts = "NUT"
-  revision = "ae0ab99deb4dc413a2b4bd6c8bdd0eb67f1e4d06"
-  version = "v1.2.0"
+  revision = "4a4468ece617fc8205e99368fa2200e9d1fad421"
+  version = "v1.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
