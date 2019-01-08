@@ -15,10 +15,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v21/github"
 	"github.com/pkg/errors"
-	"github.com/skratchdot/open-golang/open"
 	"github.com/spf13/cobra"
+	open "github.com/zchee/go-open"
+	"golang.org/x/sync/errgroup"
+
 	errpkg "github.com/zchee/ghctl/pkg/errors"
 	"github.com/zchee/ghctl/pkg/spin"
 )
@@ -57,11 +59,33 @@ var (
 			}
 		},
 	}
+	repoCollaboratorCmd = &cobra.Command{
+		Use:   "collaborator",
+		Short: "manage repository's collaborators.",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := runRepoCollaborator(cmd, args); err != nil {
+				fmt.Fprint(cmd.OutOrStderr(), err)
+			}
+		},
+	}
+	repoAcceptInvitationCmd = &cobra.Command{
+		Use:   "accept <owner/repository>",
+		Short: "accept collaborator invitation",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := runRepoAcceptInvitation(cmd, args); err != nil {
+				fmt.Fprint(cmd.OutOrStderr(), err)
+			}
+		},
+	}
 )
 
 type repoFlags struct {
 	typ         string
 	affiliation string
+
+	collaborator string
+
+	acceptUserToken string
 }
 
 var (
@@ -69,19 +93,21 @@ var (
 )
 
 func init() {
-	// init
 	rootCmd.AddCommand(repoCmd)
 
-	// List
 	repoCmd.AddCommand(repoListCmd)
 	repoListCmd.Flags().StringVarP(&flags.typ, "type", "t", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
 	repoListCmd.Flags().StringVarP(&flags.affiliation, "affiliation", "a", "", "Comma separated list repos of given affiliation[s]. [owner,collaborator,organization_member]")
 
-	// Delete
 	repoCmd.AddCommand(repoDeleteCmd)
 
-	// Open
 	repoCmd.AddCommand(repoOpenCmd)
+
+	repoCmd.AddCommand(repoCollaboratorCmd)
+	repoCollaboratorCmd.Flags().StringVar(&flags.collaborator, "collaborator", "", "username of collaborator.")
+
+	repoCmd.AddCommand(repoAcceptInvitationCmd)
+	repoAcceptInvitationCmd.Flags().StringVar(&flags.acceptUserToken, "token", "", "GitHub TOKEN for accepting user is different.")
 }
 
 func runRepoList(cmd *cobra.Command, args []string) error {
@@ -266,6 +292,133 @@ func runRepoOpen(cmd *cobra.Command, args []string) error {
 	if err := open.Run(u); err != nil {
 		return errors.Wrap(err, "could not open")
 	}
+
+	return nil
+}
+
+func runRepoCollaborator(cmd *cobra.Command, args []string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := checkArgs(cmd, args, 1, exactArgs, "<owner/repository>"); err != nil {
+		return err
+	}
+	ss := strings.Split(args[0], "/")
+	owner := ss[0]
+	repo := ss[1]
+	if flags.collaborator == "" {
+		return errors.New("--collaborator flag must be not empty")
+	}
+	collaborator := flags.collaborator
+
+	client := newClient(ctx)
+	resp, err := client.Repositories.AddCollaborator(ctx, owner, repo, collaborator, &github.RepositoryAddCollaboratorOptions{Permission: "admin"})
+	if err != nil {
+		return errors.Wrap(IsRateLimitError(err), "repo: could not get list all repositories")
+	}
+	if resp.StatusCode == http.StatusNoContent {
+		return fmt.Errorf("%s user already collaborator on %s/%s", collaborator, owner, repo)
+	}
+
+	fmt.Fprintf(os.Stdout, "added %s user to %s/%s collaborator\n", collaborator, owner, repo)
+
+	return nil
+}
+
+func runRepoAcceptInvitation(cmd *cobra.Command, args []string) error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := checkArgs(cmd, args, 1, exactArgs, "<owner/repository>"); err != nil {
+		return err
+	}
+
+	client := newClientFromToken(ctx, flags.acceptUserToken)
+	opts := &github.ListOptions{
+		Page:    1,
+		PerPage: 100,
+	}
+	invitations, resp, err := client.Users.ListInvitations(ctx, opts)
+	if err != nil {
+		return errors.Wrap(IsRateLimitError(err), "repo: could not get list invitations")
+	}
+
+	lastPage := resp.LastPage
+	lastPage-- // decrease for already gets page 1
+
+	if lastPage > 0 {
+		// make channel with size of lastPage for concurrency fetching
+		invch := make(chan []*github.RepositoryInvitation, lastPage)
+		go func() { invch <- invitations }() // send first API call results
+
+		var eg *errgroup.Group
+		eg, ctx = errgroup.WithContext(ctx)
+
+		sem := make(chan struct{}, 20) // for concurrency API access limit
+		defer close(sem)
+
+		f := func(page int, opts *github.ListOptions) error {
+			opts.Page = page
+			invs, resp, err := client.Users.ListInvitations(ctx, opts)
+			if err != nil {
+				return errors.WithStack(IsRateLimitError(err))
+			}
+			if code := resp.StatusCode; code != http.StatusOK {
+				return errors.Wrapf(err, "failed to get %d pages invitation: status code %d", page, code)
+			}
+
+			invch <- invs
+			<-sem
+			return nil
+		}
+
+		for i := 0; i < lastPage; i++ {
+			sem <- struct{}{}
+
+			i := i
+			copyopt := *opts // copy
+			eg.Go(func() error {
+				return f(i, &copyopt)
+			})
+		}
+
+		go func() {
+			for {
+				select {
+				case invs := <-invch:
+					invitations = append(invitations, invs...)
+				case <-ctx.Done():
+					close(invch)
+					return
+				}
+			}
+		}()
+
+		if err := eg.Wait(); err != nil {
+			return err
+		}
+	}
+
+	fullname := args[0]
+	var invID int64
+	for _, inv := range invitations {
+		if strings.EqualFold(inv.GetRepo().GetFullName(), fullname) {
+			invID = inv.GetID()
+		}
+	}
+	if invID == 0 {
+		return errors.Errorf("repo: not found invitation from %s repository", fullname)
+	}
+
+	respAccept, err := client.Users.AcceptInvitation(ctx, invID)
+	if err != nil {
+		return errors.WithStack(IsRateLimitError(err))
+	}
+	if code := respAccept.StatusCode; code != http.StatusNoContent {
+		return errors.Errorf("repo: failed to accept %d invitation: status: %s", invID, http.StatusText(code))
+	}
+
+	fmt.Fprintf(os.Stdout, "accepted %d invitation ID from %s repository\n", invID, fullname)
 
 	return nil
 }
