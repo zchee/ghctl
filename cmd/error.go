@@ -5,8 +5,9 @@
 package cmd
 
 import (
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v21/github"
 	"github.com/pkg/errors"
+	xerrors "golang.org/x/exp/errors"
 )
 
 var (
@@ -17,5 +18,18 @@ func checkRateLimitError(err error) error {
 	if _, ok := err.(*github.RateLimitError); ok {
 		return ErrRateLimit
 	}
+	return err
+}
+
+var (
+	errRateLimit    *github.RateLimitError
+	errmsgRateLimit = errors.New("hit GitHub API rate limit")
+)
+
+func IsRateLimitError(err error) error {
+	if xerrors.As(err, &errRateLimit) {
+		return errRateLimit
+	}
+
 	return err
 }
