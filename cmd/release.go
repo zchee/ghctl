@@ -12,7 +12,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v21/github"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -47,6 +47,7 @@ var (
 
 var (
 	releaseDeleteWithTag bool
+	releaseDeleteForce bool
 )
 
 func init() {
@@ -56,6 +57,7 @@ func init() {
 	releaseCmd.AddCommand(releaseDeleteCmd)
 
 	releaseDeleteCmd.Flags().BoolVar(&releaseDeleteWithTag, "with-tag", false, "delete also tag")
+	releaseDeleteCmd.Flags().BoolVarP(&releaseDeleteForce, "force", "f", false, "force deleting")
 }
 
 func runReleaseCreate(cmd *cobra.Command, args []string) error {
@@ -110,14 +112,16 @@ func runReleaseDelete(cmd *cobra.Command, args []string) error {
 		return errors.Wrap(err, "failed")
 	}
 
-	fmt.Printf("delete %q release? (y,n): ", owner+"/"+repo+"/"+tag)
-	r := bufio.NewReader(os.Stdin)
-	confirm, err := r.ReadString('\n')
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(confirm) != "y" {
-		return errors.New("cancelled")
+	if !releaseDeleteForce {
+		fmt.Printf("delete %q release? (y,n): ", owner+"/"+repo+"/"+tag)
+		r := bufio.NewReader(os.Stdin)
+		confirm, err := r.ReadString('\n')
+		if err != nil {
+			return err
+		}
+		if strings.TrimSpace(confirm) != "y" {
+			return errors.New("cancelled")
+		}
 	}
 
 	resp, err = client.Repositories.DeleteRelease(ctx, owner, repo, released.GetID())
