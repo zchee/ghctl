@@ -8,7 +8,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v21/github"
 	"golang.org/x/oauth2"
 )
 
@@ -23,5 +23,13 @@ func newClient(ctx context.Context) *github.Client {
 	source := oauth2.StaticTokenSource(&oauth2.Token{
 		AccessToken: token,
 	})
+	return github.NewClient(oauth2.NewClient(ctx, source))
+}
+
+func newClientFromToken(ctx context.Context, token string) *github.Client {
+	source := oauth2.StaticTokenSource(&oauth2.Token{
+		AccessToken: token,
+	})
+
 	return github.NewClient(oauth2.NewClient(ctx, source))
 }
