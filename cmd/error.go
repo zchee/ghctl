@@ -5,7 +5,7 @@
 package cmd
 
 import (
-	"github.com/google/go-github/v21/github"
+	"github.com/google/go-github/v24/github"
 	"github.com/pkg/errors"
 	xerrors "golang.org/x/exp/errors"
 )

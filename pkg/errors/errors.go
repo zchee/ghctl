@@ -7,7 +7,7 @@ package errors
 import (
 	"errors"
 
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v24/github"
 )
 
 var (
