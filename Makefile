@@ -1,21 +1,14 @@
-PKG := github.com/zchee/ghctl
-BIN := ghctl
-GO_SRCS = $(shell find . -type f \( -name '*.go' -and -not -iwholename '*testdata' \) )
+.DEFAULT_GOAL := static
 
-GO_BUILD_FLAGS = -v -x 
-ifneq ($(RACE),)
-GO_BUILD_FLAGS += -race
-endif
+# ----------------------------------------------------------------------------
+# global
 
-bulid: ghctl
+APP = ghctl
 
-ghctl: $(GO_SRCS)
-	go build -o $@ $(GO_BUILD_FLAGS) .
+# ----------------------------------------------------------------------------
+# target
 
-install: $(GO_SRCS)
-	go install $(GO_BUILD_FLAGS) .
+# ----------------------------------------------------------------------------
+# include
 
-clean:
-	rm -rf ${BIN} *.out
-
-.PHONY: build install clean
+include hack/make/go.mk
