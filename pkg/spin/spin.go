@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fatih/color"
 	spin "github.com/tj/go-spin"
+	color "github.com/zchee/color/v2"
 )
 
 const (
