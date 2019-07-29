@@ -6,10 +6,25 @@ package cmd
 
 import (
 	"context"
+	"io"
 	"os"
 
 	"github.com/google/go-github/v24/github"
 	"golang.org/x/oauth2"
+)
+
+// IOStreams provides the standard names for iostreams.
+type IOStreams struct {
+	// In think, os.Stdin.
+	In io.Reader
+	// Out think, os.Stdout.
+	Out io.Writer
+	// ErrOut think, os.Stderr.
+	ErrOut io.Writer
+}
+
+var (
+	defaultIOStreams = &IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr}
 )
 
 func newClient(ctx context.Context) *github.Client {
