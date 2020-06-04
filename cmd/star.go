@@ -12,7 +12,7 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/google/go-github/v24/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/zchee/ghctl/pkg/spin"

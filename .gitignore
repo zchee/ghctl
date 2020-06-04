@@ -19,5 +19,8 @@
 # profiling
 *.pprof
 
+# vendor
+vendor/
+
 # binary
 /ghctl

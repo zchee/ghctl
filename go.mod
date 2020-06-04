@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/golang/protobuf v1.3.0 // indirect
-	github.com/google/go-github/v24 v24.0.1
+	github.com/google/go-github/v28 v28.0.0
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.3
@@ -12,7 +12,6 @@ require (
 	github.com/tj/go-spin v1.1.0
 	github.com/zchee/color/v2 v2.0.3
 	github.com/zchee/go-open v1.0.0
-	golang.org/x/net v0.0.0-20190301231341-16b79f2e4e95 // indirect
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
 	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
 	golang.org/x/sys v0.0.0-20190726091711-fc99dfbffb4e // indirect

@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v24/github"
+	"github.com/google/go-github/v28/github"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	open "github.com/zchee/go-open"
