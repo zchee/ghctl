@@ -14,8 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/go-github/v28/github"
-	"github.com/pkg/errors"
+	"github.com/google/go-github/v38/github"
 	"github.com/spf13/cobra"
 	"github.com/zchee/ghctl/pkg/spin"
 	"golang.org/x/sync/errgroup"
@@ -157,7 +156,7 @@ func getPullRequest(ctx context.Context, client *github.Client, buf io.Writer, u
 	}
 	prs, resp, err := client.Search.Issues(ctx, query, options)
 	if err != nil {
-		return errors.Wrap(IsRateLimitError(err), "could not get search pull request result")
+		return fmt.Errorf("could not get search pull request result: %w", IsRateLimitError(err))
 	}
 
 	for _, pr := range prs.Issues {
@@ -239,7 +238,7 @@ func runPullRequestGet(cmd *cobra.Command, args []string) error {
 	}
 
 	// fmt.Fprintf(os.Stdout, "prs: %s", spew.Sdump(prs))
-	fmt.Fprintf(os.Stdout, builder.String())
+	fmt.Fprint(os.Stdout, builder.String())
 
 	return nil
 }
@@ -256,15 +255,15 @@ func listPullRequests(ctx context.Context, client *github.Client, owner string, 
 
 	prs, resp, err := client.PullRequests.List(ctx, owner, repo, opts)
 	if err != nil {
-		return nil, errors.Wrapf(IsRateLimitError(err), "failed get list of pull request from %s repository", reponame)
+		return nil, fmt.Errorf("failed get list of pull request from %s repository: %w", reponame, IsRateLimitError(err))
 	}
 	if code := resp.StatusCode; code != http.StatusOK {
-		return nil, errors.Wrapf(err, "failed to get list of pull request from %s repository: status code %d", reponame, code)
+		return nil, fmt.Errorf("failed to get list of pull request from %s repository: status code %d: %w", reponame, code, err)
 	}
 
 	lastPage := resp.LastPage
 	if lastPage == 0 {
-		return nil, errors.Errorf("not found pull requests from %s repository", reponame)
+		return nil, fmt.Errorf("not found pull requests from %s repository", reponame)
 	}
 	lastPage-- // decrease for already fetched page 1
 
@@ -289,10 +288,10 @@ func listPullRequests(ctx context.Context, client *github.Client, owner string, 
 		opts.Page = i
 		prs, resp, err := client.PullRequests.List(ctx, owner, repo, opts)
 		if err != nil {
-			return errors.WithStack(IsRateLimitError(err))
+			return IsRateLimitError(err)
 		}
 		if code := resp.StatusCode; code != http.StatusOK {
-			return errors.Wrapf(err, "failed to get %d pages pull requests from %s repository: status code %d", i, reponame, code)
+			return fmt.Errorf("failed to get %d pages pull requests from %s repository: status code %d: %w", i, reponame, code, err)
 		}
 
 		prch <- prs
@@ -338,15 +337,15 @@ func listPullRequests2(ctx context.Context, client *github.Client, owner, repo s
 
 	prs, resp, err := client.PullRequests.List(ctx, owner, repo, opts)
 	if err != nil {
-		return nil, errors.Wrapf(IsRateLimitError(err), "failed get list of pull request from %s repository", reponame)
+		return nil, fmt.Errorf("failed get list of pull request from %s repository: %w", reponame, IsRateLimitError(err))
 	}
 	if code := resp.StatusCode; code != http.StatusOK {
-		return nil, errors.Wrapf(err, "failed to get list of pull request from %s repository: status code %d", reponame, code)
+		return nil, fmt.Errorf("failed to get list of pull request from %s repository: status code %d: %w", reponame, code, err)
 	}
 
 	lastPage := resp.LastPage
 	if lastPage == 0 {
-		return nil, errors.Errorf("not found pull requests from %s repository", reponame)
+		return nil, fmt.Errorf("not found pull requests from %s repository", reponame)
 	}
 	lastPage-- // decrease for already fetched page 1
 
@@ -364,10 +363,10 @@ func listPullRequests2(ctx context.Context, client *github.Client, owner, repo s
 		opts.Page = i
 		prs, resp, err := client.PullRequests.List(ctx, owner, repo, opts)
 		if err != nil {
-			return errors.WithStack(IsRateLimitError(err))
+			return IsRateLimitError(err)
 		}
 		if code := resp.StatusCode; code != http.StatusOK {
-			return errors.Wrapf(err, "failed to get %d pages pull requests from %s repository: status code %d", i, reponame, code)
+			return fmt.Errorf("failed to get %d pages pull requests from %s repository: status code %d: %w", i, reponame, code, err)
 		}
 
 		prch <- prs
@@ -378,7 +377,7 @@ func listPullRequests2(ctx context.Context, client *github.Client, owner, repo s
 		var err error
 		for err == nil {
 			if err = sem.Acquire(ctx, 1); err != nil {
-				fmt.Fprint(os.Stdout, "Failed to acquire semaphore: %v", err)
+				fmt.Fprintf(os.Stdout, "Failed to acquire semaphore: %v", err)
 				continue
 			}
 		}

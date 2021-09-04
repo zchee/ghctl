@@ -5,9 +5,9 @@
 package cmd
 
 import (
+	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -25,15 +25,15 @@ func checkArgs(cmd *cobra.Command, args []string, expected int, typ checkType, v
 	switch typ {
 	case exactArgs:
 		if len(args) != expected {
-			err = errors.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
+			err = fmt.Errorf("%q command requires exactly %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	case minArgs:
 		if len(args) < expected {
-			err = errors.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
+			err = fmt.Errorf("%q command requires a minimum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	case maxArgs:
 		if len(args) > expected {
-			err = errors.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
+			err = fmt.Errorf("%q command requires a maximum of %s %d argument(s)", cmdName, strings.Join(value, " "), expected)
 		}
 	}
 

@@ -12,8 +12,7 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/google/go-github/v28/github"
-	"github.com/pkg/errors"
+	"github.com/google/go-github/v38/github"
 	"github.com/spf13/cobra"
 	"github.com/zchee/ghctl/pkg/spin"
 )
@@ -86,16 +85,16 @@ func runStarList(cmd *cobra.Command, args []string) error {
 	if starJSON {
 		buf, err := json.MarshalIndent(results, "", "\t")
 		if err != nil {
-			return errors.Wrap(err, "could not marshal to JSON")
+			return fmt.Errorf("could not marshal to JSON: %w", err)
 		}
 		fmt.Print(string(buf))
 	} else {
 		w := tabwriter.NewWriter(os.Stdout, 0, 8, 0, '\t', tabwriter.AlignRight)
 		for _, res := range results {
-			fmt.Fprintln(w, fmt.Sprintf("owner: %s\turl: %s", res.OwnerName, res.URL))
+			fmt.Fprintf(w, "owner: %s\turl: %s\n", res.OwnerName, res.URL)
 		}
 		if err := w.Flush(); err != nil {
-			return errors.Wrap(err, "could not flush tabwriter")
+			return fmt.Errorf("could not flush tabwriter: %w", err)
 		}
 	}
 
@@ -112,11 +111,11 @@ func listStarred(ctx context.Context, username string) (<-chan []*github.Starred
 	firstRepos, firstRes, err := client.Activity.ListStarred(ctx, username, options)
 	if err != nil {
 		err = checkRateLimitError(err)
-		errc <- errors.Wrap(err, "could not get list starred")
+		errc <- fmt.Errorf("could not get list starred: %w", err)
 		return nil, errc
 	}
 	if len(firstRepos) == 0 {
-		errc <- errors.Errorf("%s user have not starred repository\n", username)
+		errc <- fmt.Errorf("%s user have not starred repository", username)
 		return nil, errc
 	}
 
@@ -144,7 +143,7 @@ func listStarred(ctx context.Context, username string) (<-chan []*github.Starred
 				repos, _, err := client.Activity.ListStarred(ctx, username, &opts)
 				if err != nil {
 					err = checkRateLimitError(err)
-					errs = append(errs, errors.Wrap(err, "could not get list starred"))
+					errs = append(errs, fmt.Errorf("could not get list starred: %w", err))
 					return
 				}
 

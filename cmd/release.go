@@ -7,13 +7,13 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/google/go-github/v28/github"
-	"github.com/pkg/errors"
+	"github.com/google/go-github/v38/github"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +47,7 @@ var (
 
 var (
 	releaseDeleteWithTag bool
-	releaseDeleteForce bool
+	releaseDeleteForce   bool
 )
 
 func init() {
@@ -80,10 +80,10 @@ func runReleaseCreate(cmd *cobra.Command, args []string) error {
 		Body:    &body,
 	})
 	if err != nil {
-		return errors.Wrapf(checkRateLimitError(err), "could not create %s release to %s/%s", tag, owner, repo)
+		return fmt.Errorf("could not create %s release to %s/%s: %w", tag, owner, repo, checkRateLimitError(err))
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "failed")
+		return fmt.Errorf("failed: %w", err)
 	}
 
 	fmt.Fprintf(os.Stdout, "Created %s release\n", tag)
@@ -106,10 +106,10 @@ func runReleaseDelete(cmd *cobra.Command, args []string) error {
 	client := newClient(ctx)
 	released, resp, err := client.Repositories.GetReleaseByTag(ctx, owner, repo, tag)
 	if err != nil {
-		return errors.Wrapf(checkRateLimitError(err), "could not create %s release to %s/%s", tag, owner, repo)
+		return fmt.Errorf("could not create %s release to %s/%s: %w", tag, owner, repo, checkRateLimitError(err))
 	}
 	if resp.StatusCode != http.StatusOK {
-		return errors.Wrap(err, "failed")
+		return fmt.Errorf("failed: %w", err)
 	}
 
 	if !releaseDeleteForce {
@@ -126,7 +126,7 @@ func runReleaseDelete(cmd *cobra.Command, args []string) error {
 
 	resp, err = client.Repositories.DeleteRelease(ctx, owner, repo, released.GetID())
 	if err != nil {
-		return errors.Wrapf(checkRateLimitError(err), "could not delete %s release to %s/%s", tag, owner, repo)
+		return fmt.Errorf("could not delete %s release to %s/%s: %w", tag, owner, repo, checkRateLimitError(err))
 	}
 
 	fmt.Fprintf(os.Stdout, "Deleted %s release\n", tag)
@@ -134,10 +134,10 @@ func runReleaseDelete(cmd *cobra.Command, args []string) error {
 	if releaseDeleteWithTag {
 		resp, err := client.Git.DeleteRef(ctx, owner, repo, fmt.Sprintf("tags/%s", tag))
 		if err != nil {
-			return errors.Wrapf(checkRateLimitError(err), "could not delete %s release to %s/%s", tag, owner, repo)
+			return fmt.Errorf("could not delete %s release to %s/%s: %w", tag, owner, repo, checkRateLimitError(err))
 		}
 		if resp.StatusCode != http.StatusOK {
-			return errors.Wrap(err, "failed")
+			return fmt.Errorf("failed: %w", err)
 		}
 		fmt.Fprintf(os.Stdout, "Deleted %s tag\n", tag)
 	}

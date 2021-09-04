@@ -7,7 +7,7 @@ package cmd
 import (
 	"context"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v38/github"
 )
 
 func getUser(ctx context.Context, client *github.Client) (*github.User, error) {

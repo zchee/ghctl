@@ -9,7 +9,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/google/go-github/v28/github"
+	"github.com/google/go-github/v38/github"
 	"golang.org/x/oauth2"
 )
 

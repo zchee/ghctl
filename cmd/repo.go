@@ -7,6 +7,7 @@ package cmd
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -15,13 +16,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v28/github"
-	"github.com/pkg/errors"
+	"github.com/google/go-github/v38/github"
+	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
-	open "github.com/zchee/go-open"
 	"golang.org/x/sync/errgroup"
 
-	errpkg "github.com/zchee/ghctl/pkg/errors"
+	gherrors "github.com/zchee/ghctl/pkg/errors"
 	"github.com/zchee/ghctl/pkg/spin"
 )
 
@@ -80,8 +80,9 @@ var (
 )
 
 type repoFlags struct {
-	typ         string
-	affiliation string
+	typ           string
+	affiliation   string
+	includeForked bool
 
 	collaborator string
 
@@ -98,6 +99,7 @@ func init() {
 	repoCmd.AddCommand(repoListCmd)
 	repoListCmd.Flags().StringVarP(&flags.typ, "type", "t", "all", "Type of repositories to list. Default: all [all, owner, public, private, member]")
 	repoListCmd.Flags().StringVarP(&flags.affiliation, "affiliation", "a", "", "Comma separated list repos of given affiliation[s]. [owner,collaborator,organization_member]")
+	repoListCmd.Flags().BoolVar(&flags.includeForked, "forked", false, "include forked repository.")
 
 	repoCmd.AddCommand(repoDeleteCmd)
 
@@ -139,24 +141,32 @@ func runRepoList(cmd *cobra.Command, args []string) error {
 	// pre-fetch page 1 for the get LastPage size
 	firstRepos, firstResp, err := client.Repositories.List(ctx, repoName, &opts)
 	if err != nil {
-		if errpkg.IsRateLimitErr(err) {
+		if gherrors.IsRateLimitErr(err) {
 			return errors.New("repo: hit GitHub API rate limit")
 		}
 		if ctx.Err() != nil {
 			return nil
 		}
-		return errors.Wrap(err, "repo: could not get list all repositories")
+		return fmt.Errorf("repo: could not get list all repositories: %w", err)
 	}
 
 	lastPage := firstResp.LastPage
 	if lastPage == 0 {
-		return errors.Errorf("repo: %s user have not %q repository", repoName, flags.typ)
+		return fmt.Errorf("repo: %s user have not %q repository", repoName, flags.typ)
+	}
+
+	repos2 := make([]*github.Repository, 0, len(firstRepos))
+	for _, repo := range firstRepos {
+		if repo.GetFork() && !flags.includeForked {
+			continue
+		}
+		repos2 = append(repos2, repo)
 	}
 
 	// make lastPage size chan for parallel fetch
 	reposCh := make(chan []string, lastPage)
-	uris := make([]string, len(firstRepos))
-	for i, repo := range firstRepos {
+	uris := make([]string, len(repos2))
+	for i, repo := range repos2 {
 		uris[i] = repo.GetHTMLURL()
 	}
 	reposCh <- uris
@@ -179,16 +189,23 @@ func runRepoList(cmd *cobra.Command, args []string) error {
 			opts.Page = i + 1 // paging is based 1
 			repos, _, err := client.Repositories.List(ctx, repoName, &opts)
 			if err != nil {
-				if errpkg.IsRateLimitErr(err) {
-					errs <- errpkg.ErrRateLimit
+				if gherrors.IsRateLimitErr(err) {
+					errs <- gherrors.ErrRateLimit
 					return
 				}
-				errs <- errors.Wrap(err, "repo: could not get list all repositories")
+				errs <- fmt.Errorf("repo: could not get list all repositories: %w", err)
 				return
 			}
+			repos2 := make([]*github.Repository, 0, len(repos))
+			for _, repo := range repos {
+				if repo.GetFork() && !flags.includeForked {
+					continue
+				}
+				repos2 = append(repos2, repo)
+			}
 
-			urls := make([]string, len(repos))
-			for j, repo := range repos {
+			urls := make([]string, len(repos2))
+			for j, repo := range repos2 {
 				urls[j] = repo.GetHTMLURL()
 			}
 			reposCh <- urls
@@ -230,7 +247,7 @@ func runRepoDelete(cmd *cobra.Command, args []string) error {
 	s := spin.NewSpin()
 	user, err := getUser(ctx, client)
 	if err != nil {
-		return errors.Wrap(err, "could not get user information")
+		return fmt.Errorf("could not get user information: %w", err)
 	}
 
 	fmt.Printf("remove repository %q? (y,n) ", repoDeleteName)
@@ -258,7 +275,7 @@ func runRepoDelete(cmd *cobra.Command, args []string) error {
 	done <- struct{}{}
 	s.Flush()
 	if err != nil {
-		return errors.Wrapf(err, "could not delete %s repository", repoDeleteName)
+		return fmt.Errorf("could not delete %s repository: %w", repoDeleteName, err)
 	}
 
 	return nil
@@ -278,7 +295,7 @@ func runRepoOpen(cmd *cobra.Command, args []string) error {
 	if !strings.Contains(repoOpenName, "/") {
 		user, err := getUser(ctx, client)
 		if err != nil {
-			return errors.Wrap(err, "could not get user information")
+			return fmt.Errorf("could not get user information: %w", err)
 		}
 		repoOpenName = fmt.Sprintf("%s/%s", user.GetLogin(), repoOpenName)
 	}
@@ -286,11 +303,11 @@ func runRepoOpen(cmd *cobra.Command, args []string) error {
 	u := fmt.Sprintf("https://github.com/%s", repoOpenName)
 	resp, err := http.Get(u)
 	if err != nil || resp.StatusCode == http.StatusNotFound {
-		return errors.Errorf("failed http request: %s", u)
+		return fmt.Errorf("failed http request: %s", u)
 	}
 
-	if err := open.Run(u); err != nil {
-		return errors.Wrap(err, "could not open")
+	if err := browser.OpenURL(u); err != nil {
+		return fmt.Errorf("could not open %s url: %w", u, err)
 	}
 
 	return nil
@@ -312,15 +329,15 @@ func runRepoCollaborator(cmd *cobra.Command, args []string) error {
 	collaborator := flags.collaborator
 
 	client := newClient(ctx)
-	resp, err := client.Repositories.AddCollaborator(ctx, owner, repo, collaborator, &github.RepositoryAddCollaboratorOptions{Permission: "admin"})
+	inv, resp, err := client.Repositories.AddCollaborator(ctx, owner, repo, collaborator, &github.RepositoryAddCollaboratorOptions{Permission: "admin"})
 	if err != nil {
-		return errors.Wrap(IsRateLimitError(err), "repo: could not get list all repositories")
+		return fmt.Errorf("repo: could not get list all repositories: %w", IsRateLimitError(err))
 	}
 	if resp.StatusCode == http.StatusNoContent {
 		return fmt.Errorf("%s user already collaborator on %s/%s", collaborator, owner, repo)
 	}
 
-	fmt.Fprintf(os.Stdout, "added %s user to %s/%s collaborator\n", collaborator, owner, repo)
+	fmt.Fprintf(os.Stdout, "added %s user to %s/%s collaborator\n\tid: %d", collaborator, owner, repo, inv.GetID())
 
 	return nil
 }
@@ -340,7 +357,7 @@ func runRepoAcceptInvitation(cmd *cobra.Command, args []string) error {
 	}
 	invitations, resp, err := client.Users.ListInvitations(ctx, opts)
 	if err != nil {
-		return errors.Wrap(IsRateLimitError(err), "repo: could not get list invitations")
+		return fmt.Errorf("repo: could not get list invitations: %w", IsRateLimitError(err))
 	}
 
 	lastPage := resp.LastPage
@@ -361,10 +378,10 @@ func runRepoAcceptInvitation(cmd *cobra.Command, args []string) error {
 			opts.Page = page
 			invs, resp, err := client.Users.ListInvitations(ctx, opts)
 			if err != nil {
-				return errors.WithStack(IsRateLimitError(err))
+				return IsRateLimitError(err)
 			}
 			if code := resp.StatusCode; code != http.StatusOK {
-				return errors.Wrapf(err, "failed to get %d pages invitation: status code %d", page, code)
+				return fmt.Errorf("failed to get %d pages invitation: status code %d: %w", page, code, err)
 			}
 
 			invch <- invs
@@ -407,15 +424,15 @@ func runRepoAcceptInvitation(cmd *cobra.Command, args []string) error {
 		}
 	}
 	if invID == 0 {
-		return errors.Errorf("repo: not found invitation from %s repository", fullname)
+		return fmt.Errorf("repo: not found invitation from %s repository", fullname)
 	}
 
 	respAccept, err := client.Users.AcceptInvitation(ctx, invID)
 	if err != nil {
-		return errors.WithStack(IsRateLimitError(err))
+		return IsRateLimitError(err)
 	}
 	if code := respAccept.StatusCode; code != http.StatusNoContent {
-		return errors.Errorf("repo: failed to accept %d invitation: status: %s", invID, http.StatusText(code))
+		return fmt.Errorf("repo: failed to accept %d invitation: status: %s", invID, http.StatusText(code))
 	}
 
 	fmt.Fprintf(os.Stdout, "accepted %d invitation ID from %s repository\n", invID, fullname)
