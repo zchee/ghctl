@@ -24,3 +24,4 @@ vendor/
 
 # binary
 /ghctl
+/tools/bin
