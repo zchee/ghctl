@@ -1,7 +1,7 @@
 # -----------------------------------------------------------------------------
 # global
 
-.DEFAULT_GOAL := test
+.DEFAULT_GOAL := $(APP)
 comma := ,
 empty :=
 space := $(empty) $(empty)
@@ -14,6 +14,7 @@ GO_OS ?= $(shell go env GOOS)
 GO_ARCH ?= $(shell go env GOARCH)
 
 PKG := $(subst $(GO_PATH)/src/,,$(CURDIR))
+APP := $(notdir ${PKG})
 CGO_ENABLED ?= 0
 GO_BUILDTAGS=osusergo netgo static
 GO_LDFLAGS=-s -w "-extldflags=-static"
@@ -44,6 +45,13 @@ endef
 
 # -----------------------------------------------------------------------------
 # target
+
+##@ build
+
+.PHONY: $(APP)
+$(APP):
+	$(call target)
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build -v $(strip $(GO_FLAGS)) -o $@
 
 ##@ test, bench, coverage
 
